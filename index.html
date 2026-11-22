@@ -8,7 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#000000">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>VR Box · prueba v3</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<title>VR Box · prueba v4</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:#000;color:#e8ecf4;font:15px/1.45 -apple-system,system-ui,"Segoe UI",sans-serif;overflow:hidden;overscroll-behavior:none}
@@ -80,8 +81,8 @@ body.portrait.running #rotate{display:flex}
  linear-gradient(#05020f 0%,#0b0724 50%,#05020f 100%)}
 
 /* ----- ventana única (960 de ancho de layout; se escala con transform) ----- */
-.win{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;pointer-events:none;background:#0a0c12;box-shadow:0 0 0 3px rgba(255,255,255,.22),0 30px 80px rgba(0,0,0,.6)}
-.win.hov{box-shadow:0 0 0 7px #4f7cff,0 30px 80px rgba(0,0,0,.6)}
+.win{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;pointer-events:none;background:#0a0c12;box-shadow:0 0 0 3px rgba(255,255,255,.25)}
+.win.hov{box-shadow:0 0 0 7px #4f7cff}
 .win .tb{position:absolute;left:0;top:0;width:960px;height:80px;display:flex;align-items:center;background:#1a2132;color:#e8ecf4;font-size:34px;font-weight:600;padding-left:26px}
 .win.hov .tb{background:#27407e}
 .win .tt{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -102,8 +103,15 @@ body.portrait.running #rotate{display:flex}
 .rg.fld.hot{border-color:#fff}
 .rg.txt{background:transparent;color:#9aa4b8;font-size:26px;font-weight:500;justify-content:flex-start;white-space:normal;line-height:1.2}
 .rg.card{flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;background:#151b2b;font-weight:600;white-space:normal}
-.rg.card .th{width:290px;height:163px;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:80px;background:#0d111b}
-.rg.card .ct{padding:8px 12px;font-size:22px;line-height:1.2;text-align:left;max-height:72px;overflow:hidden}
+.rg.card .th{position:relative;width:290px;height:130px;flex:none;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:70px;background:#0d111b}
+.rg.card .th img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover}
+.rg.card .bd{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.82);padding:1px 9px;border-radius:6px;font-size:20px;line-height:1.3;color:#fff}
+.rg.card .ct{padding:7px 12px 0;font-size:21px;line-height:1.2;text-align:left;max-height:56px;overflow:hidden}
+.rg.card .cc{padding:2px 12px;font-size:19px;color:#9aa4b8;font-weight:500;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rg.tab{font-size:23px;border-radius:12px;background:#1d2539;padding:0 4px}
+.rg.tab.on{background:#3a5bd0}
+.rg.tab.dim{opacity:.38}
+.rg.chip{font-size:24px;font-weight:500;background:#151b2b;color:#cfd6e6;justify-content:flex-start;padding:0 18px;border-radius:28px}
 .rg.card.hot{background:#2a3d78;outline:6px solid #4f7cff}
 .rg.prog{overflow:visible;background:transparent;display:block}
 .rg.prog.hot{background:rgba(79,124,255,.25)}
@@ -143,8 +151,8 @@ body.portrait.running #rotate{display:flex}
 <body>
 
 <div id="start" class="screen">
-  <h1>Prueba VR · v3</h1>
-  <p class="sub">Una sola ventana, buscador de YouTube dentro del visor, controles nuevos y cámara arreglada.</p>
+  <h1>Prueba VR · v4</h1>
+  <p class="sub">YouTube con tu cuenta, cola de videos, voz, botón Traer y más fluidez.</p>
   <ol>
     <li>Pega tu llave de YouTube (solo la primera vez; se guarda en tu iPhone).</li>
     <li>Pon el teléfono en <b>horizontal</b> y toca <b>Iniciar</b>. Acepta cámara y movimiento.</li>
@@ -153,6 +161,10 @@ body.portrait.running #rotate{display:flex}
   <div class="card">
     <label for="key">Llave de API de YouTube</label>
     <input id="key" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="AIza…">
+    <label for="cid">Client ID de Google (para ver tu cuenta: suscripciones, listas, me gusta)</label>
+    <input id="cid" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="123456-abc….apps.googleusercontent.com">
+    <button id="login" class="big alt" type="button" style="margin-top:8px;padding:11px;font-size:15px">Iniciar sesión con Google</button>
+    <div id="loginSt" class="small" style="margin-top:6px"></div>
     <label for="files">Mis videos (opcional, del iPhone)</label>
     <input id="files" type="file" accept="video/*" multiple>
     <label for="bg">Fondo inicial</label>
@@ -161,6 +173,7 @@ body.portrait.running #rotate{display:flex}
     <select id="sens"><option value="0" selected>Estricto: pulgar e índice bien cerrados</option><option value="1">Normal</option><option value="2">Suave: basta acercarlos</option></select>
     <div class="row"><input id="usecam" type="checkbox" checked><label for="usecam">Usar cámara (manos y fondo)</label></div>
     <div class="row"><input id="autosync" type="checkbox" checked><label for="autosync">Auto-sincronizar YouTube entre ojos</label></div>
+    <div class="row"><input id="dict" type="checkbox" checked><label for="dict">Búsqueda por voz (pide el micrófono)</label></div>
     <div class="row"><input id="cpu" type="checkbox"><label for="cpu">Manos en CPU (si la detección falla)</label></div>
   </div>
   <button id="go" class="big">Iniciar</button>
@@ -218,10 +231,10 @@ const S={
   running:false,opts:{},ew:0,eh:0,ppd:5,conv:0,bg:'cam',debug:true,menuOpen:false,panel:null,heads:[],
   bearing:0,yaw0:0,head:{yaw:0,pitch:0,roll:0},oriOK:false,sim:{on:false,yaw:0,pitch:0,keys:{}},needCenter:true,
   eyes:[],win:null,hands:[newHand(),newHand()],zoom:null,
-  stream:null,camVideo:null,vid:null,vidAct:false,files:[],key:'',lm:null,delegate:'—',detErr:0,detMs:0,detCount:0,detFps:0,lastDet:0,lastVT:-1,detInterval:33,
+  stream:null,camVideo:null,vid:null,vidAct:false,files:[],key:'',lm:null,delegate:'—',detErr:0,detMs:0,detCount:0,detFps:0,lastDet:0,lastVT:-1,detInterval:40,
   sens:0,pinchOn:.14,pinchOff:.32,pinchCount:0,
   frames:0,fps:0,log:[],t0:0,act:false,ytActive:false,
-  msg:'',msgT:0,msgHands:'',flash:-1,flashT:0,exitArmed:0,hintUntil:0,hoverKey:'',timers:[],cs:1.5
+  msg:'',msgT:0,msgHands:'',flash:-1,flashT:0,exitArmed:0,hintUntil:0,hoverKey:'',timers:[],cs:1.25,tok:null,tokExp:0,tokClient:null,follow:false,perf:false
 };
 function setSens(i){S.sens=i;const q=SENS[i];S.pinchOn=parseFloat(QS.get('on'))||q.on;S.pinchOff=parseFloat(QS.get('off'))||q.off;}
 
@@ -319,18 +332,21 @@ function vidPump(){
 
 /* ================= menú y HUD ================= */
 function closeMenu(){S.menuOpen=false;buildHud();}
+function bringWin(){showWin();setMsg('Ventana traída a donde miras');}
+function togglePerf(){S.perf=!S.perf;S.cs=S.perf?1:1.25;S.detInterval=S.perf?66:40;applyGeom();setMsg(S.perf?'Modo rendimiento: cámara más ligera':'Modo normal');}
 function uiItems(){
   const ew=S.ew,eh=S.eh,it=[];S.panel=null;S.heads=[];
   const add=(x,y,w,h,label,act,cls)=>it.push({x,y,w,h,label,act,cls:cls||''});
   if(!S.menuOpen){
-    const bh=46,y=eh-bh-10;
-    add(ew/2-86,y,120,bh,()=>'☰ Menú',()=>{S.menuOpen=true;buildHud();},'big');
-    add(ew/2+42,y,bh,bh,()=>'◎',recentre,'big');
+    const bh=46,y=eh-bh-10,x0=(ew-286)/2;
+    add(x0,y,104,bh,()=>'☰ Menú',()=>{S.menuOpen=true;buildHud();},'big');
+    add(x0+112,y,120,bh,()=>'🎯 Traer',bringWin,'big');
+    add(x0+240,y,46,bh,()=>'◎',recentre,'big');
     return it;
   }
-  const pw=Math.min(ew-12,404),px=(ew-pw)/2,pd=8,gap=5,cols=3,bw=(pw-pd*2-gap*(cols-1))/cols,bh=36,hh=15;
-  const total=3*hh+6*(bh+gap)+pd*2;
-  const y0=Math.max(S.debug?48:10,(eh-total)/2);
+  const pw=Math.min(ew-12,404),px=(ew-pw)/2,pd=7,gap=4,cols=3,bw=(pw-pd*2-gap*(cols-1))/cols,bh=32,hh=13;
+  const total=3*hh+7*(bh+gap)+pd*2;
+  const y0=Math.max(S.debug?46:6,(eh-total)/2);
   S.panel={x:px,y:y0,w:pw,h:total};
   let y=y0+pd;
   const head=t=>{S.heads.push({x:px+pd+2,y:y+1,label:t});y+=hh;};
@@ -351,7 +367,10 @@ function uiItems(){
   row([[()=>'👁 Ojos −',()=>{S.conv=clamp(S.conv-2,-40,40);setMsg('Separación '+S.conv);}],
        [()=>'👁 Ojos +',()=>{S.conv=clamp(S.conv+2,-40,40);setMsg('Separación '+S.conv);}],
        [()=>'❔ Ayuda',()=>{S.hintUntil=performance.now()+25000;closeMenu();}]]);
-  row([[()=>'↩ Cerrar',()=>closeMenu(),'big'],
+  row([[()=>'📌 Seguir: '+(S.follow?'sí':'no'),()=>{S.follow=!S.follow;setMsg(S.follow?'La ventana te sigue cuando miras lejos':'La ventana se queda fija');}],
+       [()=>'⚡ Rendim.: '+(S.perf?'sí':'no'),togglePerf],
+       [()=>'🎯 Traer ventana',()=>{bringWin();closeMenu();}]]);
+  row([[()=>'↩ Cerrar',()=>closeMenu()],
        [()=>S.exitArmed>performance.now()?'¿Seguro?':'✕ Salir',()=>{if(S.exitArmed>performance.now())endSession();else S.exitArmed=performance.now()+3000;},'red']]);
   return it;
 }
@@ -382,7 +401,7 @@ function setMsg(t,ms=3500){S.msg=t;S.msgT=performance.now()+ms;}
 const R=(x,y,w,h,o)=>Object.assign({x,y,w,h},o||{});
 function createWindow(){
   const w={yaw:0,pitch:0,s:.32,visible:true,view:'player',kind:'yt',regions:[],rEls:[[],[]],refs:[{},{}],els:[],pv:[],fv:[],fc:[],rl:[],
-    q:'',kb:false,items:[],page:0,status:'',label:'',curTitle:'',err:0,drift:0,seeks:0,nudges:0,rate:1,ytReady:false,fld:[],seekFrac:null,sBefore:null,lastUI:[{},{}]};
+    q:'',kb:false,items:[],page:0,status:'',label:'',tab:'',cache:{},queue:[],qi:-1,last:null,loading:false,listening:false,rq:0,trc:[],curTitle:'',err:0,drift:0,seeks:0,nudges:0,rate:1,ytReady:false,fld:[],seekFrac:null,sBefore:null,lastUI:[{},{}]};
   for(let side=0;side<2;side++){
     const el=mk('div','win');el.style.width=WL+'px';el.style.height=HL+'px';
     el.innerHTML=`<div class="tb"><span class="tt"></span><span class="bx">✕</span></div>`+
@@ -425,44 +444,62 @@ function hideWin(){
   pPause(w);w.visible=false;w.els.forEach(e=>e.style.display='none');S.hoverKey='';
   S.hands.forEach(h=>{if(h.grab&&h.grab.type!=='ui'){h.grab=null;}});S.zoom=null;
 }
+function closeKb(w){if(w.kb){w.kb=false;if(w.sBefore!=null){w.s=w.sBefore;w.sBefore=null;}}}
 function openHome(){
-  const w=S.win;if(!w)return;pPause(w);showWin();w.kb=false;
+  const w=S.win;if(!w)return;pPause(w);showWin();closeKb(w);
   setView(w,'home');
-  if(!w.items.length&&S.key&&!w.loading)loadTrending(w);
+  if(!w.items.length&&!w.loading)showTab(w,authed()?'subs':'trend');
 }
 function openLib(){const w=S.win;if(!w)return;pPause(w);showWin();w.page=0;setView(w,'lib');}
 
-/* ---------- vista: inicio / búsqueda con teclado ---------- */
+/* ---------- vista: inicio (búsqueda, pestañas, tarjetas, teclado) ---------- */
 const KROWS=['1234567890','qwertyuiop','asdfghjklñ','zxcvbnm'];
+const TABS=[['subs','📺 Subs'],['lists','📂 Listas'],['likes','👍 Me gusta'],['trend','🔥 Tendencia'],['sim','🎞 Similares'],['chan','👤 Canal']];
+const PER=6;
+const recents=()=>{try{return JSON.parse(localStorage.getItem('vrrec')||'[]');}catch(_){return[];}};
+function pushRecent(q){try{const r=recents().filter(x=>x!==q);r.unshift(q);localStorage.setItem('vrrec',JSON.stringify(r.slice(0,6)));}catch(_){}}
+function cardBuild(el,it){
+  const th=mk('div','th');
+  if(it.thumb){const img=mk('img');img.src=it.thumb;img.alt='';img.draggable=false;th.append(img);}else th.textContent=it.pl?'📂':'🎞';
+  if(it.pl||it.dur){const b=mk('div','bd');b.textContent=it.pl?(it.count+' videos'):fmtDur(it.dur);th.append(b);}
+  const t=mk('div','ct');t.textContent=it.title;
+  const c=mk('div','cc');c.textContent=it.ch||'';
+  el.append(th,t,c);
+}
 function viewHome(w){
   const rs=[];
-  rs.push(R(20,0,560,86,{cls:'fld',build:(el,side)=>{w.fld[side]=el;fieldText(w,side);},act:()=>{toggleKb(w,true);}}));
-  rs.push(R(596,0,104,86,{text:'🔍',act:()=>{if(w.q.trim())doSearch(w,w.q.trim());else toggleKb(w,true);}}));
-  rs.push(R(716,0,100,86,{text:'◀',act:()=>{if(w.page>0){w.page--;setView(w,'home');}}}));
-  rs.push(R(832,0,108,86,{text:'▶',act:()=>{if((w.page+1)*6<w.items.length){w.page++;setView(w,'home');}}}));
+  rs.push(R(20,0,600,78,{cls:'fld',build:(el,side)=>{w.fld[side]=el;fieldText(w,side);},act:()=>toggleKb(w,true)}));
+  rs.push(R(632,0,100,78,{text:w.listening?'🔴':'🎤',act:()=>startDictation(w)}));
+  rs.push(R(744,0,100,78,{text:'🔍',act:()=>{if(w.q.trim())doSearch(w,w.q.trim());else toggleKb(w,true);}}));
+  rs.push(R(856,0,84,78,{text:w.kb?'✕':'⌨',act:()=>{w.kb?closeKbView(w):toggleKb(w,true);}}));
   if(w.kb){
+    recents().slice(0,3).forEach((q,i)=>rs.push(R(20+i*310,84,300,56,{cls:'chip',text:'🕘 '+q,act:()=>{w.q=q;doSearch(w,q);}})));
     KROWS.forEach((row,ri)=>{
-      [...row].forEach((ch,i)=>rs.push(R(20+i*92,102+ri*100,84,92,{cls:'key',text:ch,act:()=>typeKey(w,ch)})));
+      [...row].forEach((ch,i)=>rs.push(R(20+i*92,150+ri*88,84,80,{cls:'key',text:ch,act:()=>typeKey(w,ch)})));
     });
-    rs.push(R(20+7*92,102+3*100,176,92,{cls:'key wide',text:'⌫ borrar',act:()=>{w.q=w.q.slice(0,-1);updateFields(w);}}));
-    rs.push(R(20,102+4*100,560,92,{cls:'key wide',text:'espacio',act:()=>typeKey(w,' ')}));
-    rs.push(R(600,102+4*100,180,92,{cls:'key wide',text:'🔍 Buscar',act:()=>{if(w.q.trim())doSearch(w,w.q.trim());}}));
-    rs.push(R(800,102+4*100,140,92,{cls:'key wide',text:'⌨ ocultar',act:()=>toggleKb(w,false)}));
+    rs.push(R(20+7*92,150+3*88,176,80,{cls:'key wide',text:'⌫ borrar',act:()=>{w.q=w.q.slice(0,-1);updateFields(w);}}));
+    rs.push(R(20,150+4*88,560,80,{cls:'key wide',text:'espacio',act:()=>typeKey(w,' ')}));
+    rs.push(R(600,150+4*88,180,80,{cls:'key wide',text:'🔍 Buscar',act:()=>{if(w.q.trim())doSearch(w,w.q.trim());}}));
+    rs.push(R(800,150+4*88,140,80,{cls:'key wide',text:'🗑 todo',act:()=>{w.q='';updateFields(w);}}));
   }else{
-    const per=6,from=w.page*per,list=w.items.slice(from,from+per);
+    TABS.forEach((t,i)=>{
+      const dim=(['subs','lists','likes'].includes(t[0])&&!authed());
+      rs.push(R(20+i*152,84,148,60,{cls:'tab'+(w.tab===t[0]?' on':'')+(dim?' dim':''),text:t[1],act:()=>showTab(w,t[0])}));
+    });
+    const list=w.items.slice(w.page*PER,w.page*PER+PER);
     list.forEach((it,i)=>{
       const c=i%3,r=Math.floor(i/3);
-      rs.push(R(20+c*315,112+r*268,290,240,{cls:'card',build:el=>{
-        const img=mk('img','th');img.src=it.thumb;img.alt='';img.draggable=false;
-        const t=mk('div','ct');t.textContent=it.title;el.append(img,t);
-      },act:()=>playYT(w,it)}));
+      rs.push(R(20+c*315,152+r*234,290,226,{cls:'card',build:el=>cardBuild(el,it),act:()=>it.pl?openPlaylist(w,it):playYT(w,it)}));
     });
-    const pages=Math.max(1,Math.ceil(w.items.length/per));
-    const st=w.loading?'Buscando…':(w.status||(w.items.length?'':(S.key?'Escribe qué quieres ver (toca el cuadro de búsqueda)':'Falta la llave de API: pégala en la pantalla de inicio')));
-    rs.push(R(20,646,920,48,{cls:'txt noHit',noHit:true,text:(w.items.length?(w.label||'')+' · pág '+(w.page+1)+'/'+pages+(st?' · '+st:''):st)}));
+    const pages=Math.max(1,Math.ceil(w.items.length/PER));
+    rs.push(R(20,626,140,70,{text:'◀',act:()=>{if(w.page>0){w.page--;setView(w,'home');}}}));
+    rs.push(R(800,626,140,70,{text:'▶',act:()=>{if((w.page+1)*PER<w.items.length){w.page++;setView(w,'home');}}}));
+    const lab=w.loading?'Cargando…':(w.status||(w.items.length?(w.label||'')+' · pág '+(w.page+1)+'/'+pages:(S.key||authed()?'Elige una pestaña o busca algo':'Falta la llave de API (pantalla de inicio)')));
+    rs.push(R(172,626,616,70,{cls:'txt',noHit:true,text:lab}));
   }
   return rs;
 }
+function closeKbView(w){closeKb(w);setView(w,'home');}
 function fieldText(w,side){
   const el=w.fld[side];if(!el)return;
   if(!w.q&&!w.kb){el.textContent='🔍 Buscar en YouTube';el.classList.add('ph');}
@@ -476,10 +513,54 @@ function toggleKb(w,on){
   else if(w.sBefore!=null){w.s=w.sBefore;w.sBefore=null;}
   setView(w,'home');
 }
+/* ---------- dictado por voz (experimental en iOS) ---------- */
+function startDictation(w){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){setMsg('Este navegador no tiene dictado: usa el teclado');return;}
+  if(w.listening)return;
+  closeKb(w);
+  let rec;try{rec=new SR();}catch(_){setMsg('No se pudo iniciar el dictado');return;}
+  rec.lang='es-MX';rec.interimResults=true;rec.maxAlternatives=1;rec.continuous=false;
+  w.listening=true;w.q='';setView(w,'home');setMsg('🎤 Escuchando… di qué quieres ver',7000);
+  let got='',done=false;
+  const end=()=>{if(done)return;done=true;w.listening=false;if(w.view==='home')setView(w,'home');if(got.trim())doSearch(w,got.trim());};
+  rec.onresult=e=>{got='';for(let i=0;i<e.results.length;i++)got+=e.results[i][0].transcript;w.q=got;updateFields(w);if(e.results[e.results.length-1].isFinal){try{rec.stop();}catch(_){}}};
+  rec.onerror=e=>{done=true;w.listening=false;if(w.view==='home')setView(w,'home');setMsg('Dictado no disponible ('+(e.error||'error')+'). Usa el teclado.',5000);};
+  rec.onend=end;
+  try{rec.start();}catch(_){done=true;w.listening=false;setView(w,'home');setMsg('El dictado no arrancó. Usa el teclado.',5000);}
+  setTimeout(()=>{if(!done)try{rec.stop();}catch(_){}},9000);
+}
+/* ---------- cuenta de Google (OAuth, solo lectura) ---------- */
+const authed=()=>!!S.tok&&S.tokExp>Date.now()+30000;
+function loginSt(t,ok){const e=$('#loginSt');e.textContent=t;e.style.color=ok?'#7dffa0':'#ff8b8b';}
+function gisInit(){
+  const cid=($('#cid').value||'').trim();
+  if(!cid||!window.google||!google.accounts||!google.accounts.oauth2)return null;
+  try{localStorage.setItem('vrcid',cid);}catch(_){}
+  S.tokClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/youtube.readonly',
+    callback:r=>{
+      if(r.error){loginSt('No se pudo iniciar sesión: '+r.error,false);return;}
+      S.tok=r.access_token;S.tokExp=Date.now()+(r.expires_in||3600)*1000;
+      try{localStorage.setItem('vrt',JSON.stringify({t:S.tok,e:S.tokExp}));}catch(_){}
+      loginSt('✔ Sesión iniciada (dura cerca de 1 hora)',true);
+    },
+    error_callback:e=>loginSt('No se abrió el inicio de sesión ('+((e&&e.type)||'error')+'). ¿Bloqueó la ventana emergente?',false)});
+  return S.tokClient;
+}
+function loginClick(){
+  if(!($('#cid').value||'').trim()){loginSt('Pega primero tu Client ID',false);return;}
+  const c=gisInit();
+  if(!c){loginSt('Google aún está cargando, intenta otra vez en un momento',false);return;}
+  c.requestAccessToken({prompt:authed()?'':'consent'});
+}
 /* ---------- YouTube Data API ---------- */
 async function ytFetch(path){
-  const r=await fetch(API+path+(path.includes('?')?'&':'?')+'key='+encodeURIComponent(S.key));
+  if(!S.key&&!authed())throw new Error('NOKEY');
+  const headers={};if(authed())headers.Authorization='Bearer '+S.tok;
+  const url=API+path+(S.key?(path.includes('?')?'&':'?')+'key='+encodeURIComponent(S.key):'');
+  const r=await fetch(url,{headers});
   let j=null;try{j=await r.json();}catch(_){}
+  if(r.status===401){S.tok=null;throw new Error('AUTH');}
   if(!r.ok){
     const e=j&&j.error,why=e&&((e.errors&&e.errors[0]&&e.errors[0].reason)||e.message)||('HTTP '+r.status);
     throw new Error(why);
@@ -488,46 +569,121 @@ async function ytFetch(path){
 }
 const apiErr=e=>{
   const m=String(e&&e.message||e);
+  if(m==='NOKEY')return 'Falta la llave de API (pégala en la pantalla de inicio)';
+  if(m==='AUTH')return 'Tu sesión de Google caducó: sal y vuelve a iniciarla en la pantalla de inicio';
   if(/quota/i.test(m))return 'Se acabó la cuota gratis de hoy (se renueva a medianoche, hora del Pacífico)';
-  if(/keyInvalid|API key not valid|forbidden|referer|ipRefererBlocked/i.test(m))return 'La llave no sirve aquí: revisa que esté bien pegada y restringida a tu sitio ('+m+')';
+  if(/keyInvalid|API key not valid|forbidden|referer|ipRefererBlocked|insufficient|accessNotConfigured/i.test(m))return 'YouTube rechazó la petición ('+m+'). Revisa llave y permisos';
   if(/Failed to fetch|Load failed|NetworkError/i.test(m))return 'Sin conexión con YouTube';
   return 'Error de YouTube: '+m;
 };
-async function doSearch(w,q){
-  if(!S.key){w.status='Falta la llave de API: pégala en la pantalla de inicio';setView(w,'home');return;}
-  w.loading=true;w.kb=false;
-  if(w.sBefore!=null){w.s=w.sBefore;w.sBefore=null;}
-  w.status='';w.page=0;setView(w,'home');
+const ytIso=d=>{const m=/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(d||'');return m?((+m[1]||0)*3600+(+m[2]||0)*60+(+m[3]||0)):0;};
+const fmtDur=s=>s>=3600?Math.floor(s/3600)+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60):Math.floor(s/60)+':'+pad(s%60);
+function norm(v){
+  const sn=v.snippet||{},th=sn.thumbnails||{};
+  return {id:v.id,title:decode(sn.title),ch:decode(sn.channelTitle||''),chId:sn.channelId,thumb:((th.medium||th.default||{}).url)||'',dur:ytIso(v.contentDetails&&v.contentDetails.duration)};
+}
+const embeddable=v=>v&&v.status&&v.status.embeddable;
+async function hydrate(ids){      // completa duración/canal y descarta lo que no se puede incrustar
+  const map={};
+  for(let i=0;i<ids.length;i+=50){
+    const j=await ytFetch('videos?part=snippet,contentDetails,status&maxResults=50&id='+ids.slice(i,i+50).join(','));
+    (j.items||[]).forEach(v=>{map[v.id]=v;});
+  }
+  return ids.map(id=>map[id]).filter(embeddable).map(norm);
+}
+const VPARTS='part=snippet,contentDetails,status';
+async function fetchTab(w,tab){
+  if(tab==='trend'){
+    const j=await ytFetch('videos?'+VPARTS+'&chart=mostPopular&regionCode=MX&maxResults=48');
+    return {items:(j.items||[]).filter(embeddable).map(norm),label:'Tendencias en México'};
+  }
+  if(tab==='likes'){
+    const j=await ytFetch('videos?'+VPARTS+'&myRating=like&maxResults=50');
+    return {items:(j.items||[]).filter(embeddable).map(norm),label:'Videos que te gustan'};
+  }
+  if(tab==='subs'){
+    const sj=await ytFetch('subscriptions?part=snippet&mine=true&maxResults=50&order=alphabetical');
+    const chans=(sj.items||[]).map(x=>x.snippet&&x.snippet.resourceId&&x.snippet.resourceId.channelId).filter(Boolean).slice(0,40);
+    const got=await Promise.all(chans.map(id=>ytFetch('playlistItems?part=contentDetails&maxResults=3&playlistId=UU'+id.slice(2)).then(j=>j.items||[]).catch(()=>[])));
+    const all=[].concat(...got).filter(x=>x.contentDetails&&x.contentDetails.videoId);
+    all.sort((a,b)=>String(b.contentDetails.videoPublishedAt||'').localeCompare(String(a.contentDetails.videoPublishedAt||'')));
+    const ids=[...new Set(all.map(x=>x.contentDetails.videoId))].slice(0,60);
+    return {items:await hydrate(ids),label:'Lo nuevo de tus suscripciones'};
+  }
+  if(tab==='lists'){
+    const out=[];
+    try{
+      const c=await ytFetch('channels?part=contentDetails&mine=true');
+      const up=c.items&&c.items[0]&&c.items[0].contentDetails.relatedPlaylists.uploads;
+      if(up)out.push({pl:true,id:up,title:'Mis videos subidos',ch:'Tu canal',thumb:'',count:'—'});
+    }catch(_){}
+    const j=await ytFetch('playlists?part=snippet,contentDetails&mine=true&maxResults=50');
+    (j.items||[]).forEach(p=>{const th=p.snippet.thumbnails||{};out.push({pl:true,id:p.id,title:decode(p.snippet.title),ch:'Lista',thumb:((th.medium||th.default||{}).url)||'',count:p.contentDetails.itemCount});});
+    return {items:out,label:'Tus listas (toca una para abrirla)'};
+  }
+  if(tab==='sim'){
+    const q=(w.last.title||'').replace(/[\[\(].*?[\]\)]/g,'').slice(0,80);
+    const j=await ytFetch('search?part=snippet&type=video&videoEmbeddable=true&videoSyndicated=true&maxResults=30&q='+encodeURIComponent(q));
+    const ids=(j.items||[]).map(it=>it.id&&it.id.videoId).filter(x=>x&&x!==w.last.id);
+    return {items:await hydrate(ids),label:'Parecidos a “'+q.slice(0,30)+'”'};
+  }
+  if(tab==='chan'){
+    if(!w.last.chId)throw new Error('Este video no trae canal');
+    const j=await ytFetch('playlistItems?part=contentDetails&maxResults=48&playlistId=UU'+w.last.chId.slice(2));
+    const ids=(j.items||[]).map(x=>x.contentDetails&&x.contentDetails.videoId).filter(Boolean);
+    return {items:await hydrate(ids),label:'Más de '+(w.last.ch||'este canal')};
+  }
+  return {items:[],label:''};
+}
+async function showTab(w,tab){
+  if(['subs','lists','likes'].includes(tab)&&!authed()){setMsg('Inicia sesión con Google en la pantalla de inicio para ver esto',5000);return;}
+  if((tab==='sim'||tab==='chan')&&!w.last){setMsg('Primero reproduce un video y luego usa esta pestaña',5000);return;}
+  closeKb(w);
+  w.tab=tab;w.page=0;w.status='';
+  const c=w.cache[tab];
+  if(c&&tab!=='sim'&&tab!=='chan'&&Date.now()-c.t<600000){w.items=c.items;w.label=c.label;setView(w,'home');return;}
+  const rq=++w.rq;w.loading=true;w.items=[];setView(w,'home');
   try{
-    const j=await ytFetch(`search?part=snippet&type=video&videoEmbeddable=true&videoSyndicated=true&maxResults=24&q=${encodeURIComponent(q)}`);
-    w.items=(j.items||[]).filter(it=>it.id&&it.id.videoId).map(it=>({id:it.id.videoId,title:decode(it.snippet.title),thumb:(it.snippet.thumbnails.medium||it.snippet.thumbnails.default).url}));
-    w.label='“'+q+'”';w.status=w.items.length?'':'Sin resultados que se puedan incrustar';
-  }catch(e){w.status=apiErr(e);w.items=[];}
+    const r=await fetchTab(w,tab);
+    if(rq!==w.rq)return;
+    w.cache[tab]={items:r.items,label:r.label,t:Date.now()};
+    w.items=r.items;w.label=r.label;if(!r.items.length)w.status='Sin videos que se puedan incrustar aquí';
+  }catch(e){if(rq!==w.rq)return;w.status=apiErr(e);w.items=[];}
   w.loading=false;if(w.view==='home')setView(w,'home');
 }
-async function loadTrending(w){
-  w.loading=true;
+async function doSearch(w,q){
+  closeKb(w);pushRecent(q);
+  const rq=++w.rq;w.tab='search';w.page=0;w.status='';w.loading=true;w.items=[];setView(w,'home');
   try{
-    const j=await ytFetch('videos?part=snippet,status&chart=mostPopular&regionCode=MX&maxResults=36');
-    w.items=(j.items||[]).filter(it=>it.status&&it.status.embeddable).map(it=>({id:it.id,title:decode(it.snippet.title),thumb:(it.snippet.thumbnails.medium||it.snippet.thumbnails.default).url}));
-    w.label='Tendencias en México';w.status='';
-  }catch(e){w.status=apiErr(e);}
+    const j=await ytFetch('search?part=snippet&type=video&videoEmbeddable=true&videoSyndicated=true&maxResults=36&q='+encodeURIComponent(q));
+    const ids=(j.items||[]).map(it=>it.id&&it.id.videoId).filter(Boolean);
+    if(rq!==w.rq)return;
+    w.items=await hydrate(ids);w.label='“'+q+'”';w.status=w.items.length?'':'Sin resultados que se puedan incrustar';
+  }catch(e){if(rq!==w.rq)return;w.status=apiErr(e);w.items=[];}
+  w.loading=false;if(w.view==='home')setView(w,'home');
+}
+async function openPlaylist(w,it){
+  const rq=++w.rq;w.page=0;w.status='';w.loading=true;w.items=[];setView(w,'home');
+  try{
+    const j=await ytFetch('playlistItems?part=contentDetails&maxResults=50&playlistId='+encodeURIComponent(it.id));
+    const ids=(j.items||[]).map(x=>x.contentDetails&&x.contentDetails.videoId).filter(Boolean);
+    if(rq!==w.rq)return;
+    w.items=await hydrate(ids);w.label='📂 '+it.title;if(!w.items.length)w.status='Lista vacía o sin videos incrustables';
+  }catch(e){if(rq!==w.rq)return;w.status=apiErr(e);w.items=[];}
   w.loading=false;if(w.view==='home')setView(w,'home');
 }
 /* ---------- vista: mis videos ---------- */
 function libItems(){return S.files.concat([{title:'Video de prueba (flor)',url:MP4_URL}]);}
 function viewLib(w){
-  const rs=[],items=libItems(),per=6,pages=Math.max(1,Math.ceil(items.length/per));
-  rs.push(R(20,0,680,86,{cls:'txt noHit',noHit:true,text:'📁 Elige un video'}));
-  rs.push(R(716,0,100,86,{text:'◀',act:()=>{if(w.page>0){w.page--;setView(w,'lib');}}}));
-  rs.push(R(832,0,108,86,{text:'▶',act:()=>{if(w.page<pages-1){w.page++;setView(w,'lib');}}}));
-  items.slice(w.page*per,w.page*per+per).forEach((it,i)=>{
+  const rs=[],items=libItems(),pages=Math.max(1,Math.ceil(items.length/PER));
+  rs.push(R(20,0,920,78,{cls:'txt',noHit:true,text:'📁 Elige un video de tu iPhone'}));
+  items.slice(w.page*PER,w.page*PER+PER).forEach((it,i)=>{
     const c=i%3,r=Math.floor(i/3);
-    rs.push(R(20+c*315,112+r*268,290,240,{cls:'card',build:el=>{
-      const th=mk('div','th');th.textContent='🎞';const t=mk('div','ct');t.textContent=it.title;el.append(th,t);
-    },act:()=>playFile(w,it)}));
+    rs.push(R(20+c*315,152+r*234,290,226,{cls:'card',build:el=>cardBuild(el,{title:it.title,ch:'Archivo',thumb:''}),act:()=>playFile(w,it)}));
   });
-  rs.push(R(20,646,920,48,{cls:'txt noHit',noHit:true,text:S.files.length?'Pág '+(w.page+1)+'/'+pages:'Elige tus videos en la pantalla de inicio (antes de empezar)'}));
+  rs.push(R(20,626,140,70,{text:'◀',act:()=>{if(w.page>0){w.page--;setView(w,'lib');}}}));
+  rs.push(R(800,626,140,70,{text:'▶',act:()=>{if(w.page<pages-1){w.page++;setView(w,'lib');}}}));
+  rs.push(R(172,626,616,70,{cls:'txt',noHit:true,text:S.files.length?'Pág '+(w.page+1)+'/'+pages:'Elige tus videos en la pantalla de inicio, antes de empezar'}));
   return rs;
 }
 /* ---------- vista: reproductor ---------- */
@@ -537,8 +693,8 @@ function viewPlayer(w){
     el.innerHTML='<div class="pt"></div><div class="pf"></div><div class="pk"></div><div class="t1">00:00</div><div class="t2">00:00</div>';
     const r=w.refs[side];r.fill=$('.pf',el);r.knob=$('.pk',el);r.t1=$('.t1',el);r.t2=$('.t2',el);
   },act:lx=>{w.seekFrac=clamp((lx-PX0)/PW,0,1);playerUI(w);return 'seek';}}));
-  const B=[['⌂ Inicio',()=>openHome()],['⏪ 10',()=>pSeekBy(w,-10)],['▶',()=>pToggle(w),'play'],['10 ⏩',()=>pSeekBy(w,10)],['🔊',()=>pToggleMute(w),'mute']];
-  B.forEach((b,i)=>rs.push(R(i*192+4,604,184,92,{text:b[0],act:b[1],build:(el,side)=>{el.textContent=b[0];if(b[2])w.refs[side][b[2]]=el;}})));
+  const B=[['↩ Lista',()=>openHome()],['⏪ 10',()=>pSeekBy(w,-10)],['▶',()=>pToggle(w),'play'],['10 ⏩',()=>pSeekBy(w,10)],['⏭',()=>pNext(w)],['🔊',()=>pToggleMute(w),'mute']];
+  B.forEach((b,i)=>rs.push(R(i*160+3,604,154,92,{text:b[0],act:b[1],build:(el,side)=>{el.textContent=b[0];if(b[2])w.refs[side][b[2]]=el;}})));
   return rs;
 }
 function playerUI(w){
@@ -594,9 +750,17 @@ function playFile(w,it){
   const pr=v.play();
   if(pr&&pr.catch)pr.catch(()=>{v.muted=true;v.play().catch(()=>{});setMsg('iOS bloqueó el sonido: va sin audio (activa 🔊 o usa el botón del inicio)');});
 }
-function playYT(w,it){
+function pNext(w){
+  if(w.kind==='yt'){
+    if(w.qi>=0&&w.qi+1<w.queue.length){playYT(w,w.queue[w.qi+1],true);}
+    else{setMsg('Fin de la lista');openHome();}
+  }else if(w.kind==='file')openLib();
+}
+function playYT(w,it,keepQueue){
   if(!w.ytReady){setMsg('YouTube aún carga, espera un momento');return;}
   pPause(w);
+  if(!keepQueue){w.queue=w.items.filter(x=>!x.pl);}
+  w.qi=w.queue.findIndex(x=>x.id===it.id);w.last=it;
   w.kind='yt';w.curTitle=it.title;w.err=0;w.rate=1;w.loadT=performance.now();w.fixed=false;
   setView(w,'player');
   try{w.p[0].loadVideoById(it.id);w.p[1].loadVideoById(it.id);w.p[1].mute();w.p[1].setPlaybackRate(1);}catch(_){}
@@ -626,6 +790,7 @@ function createYT(w){
   });
 }
 function onMasterState(w,st){
+  if(st===0&&!S.act&&w.view==='player'&&w.kind==='yt'){pNext(w);return;}
   if(st===1){w.err=0;if(S.act){S.ytActive=true;const a=$('#actYT');a.textContent='YouTube: ✔ activado, con sonido';a.className='ok';}}
 }
 function onYTError(w,code){
@@ -836,17 +1001,25 @@ function tick(ts){
   updateHead(dt);maybeDetect(ts);
   const w=S.win;
   if(S.act&&w){w.yaw=S.head.yaw;w.pitch=S.head.pitch;w.s=Math.min(.45,(S.ew-24)/WL);}   // en la fase de activación la ventana se queda fija en pantalla
+  if(S.follow&&w&&w.visible&&!S.act&&!S.hands.some(h=>h.grab&&h.grab.win===w)){
+    const dy=wrap180(S.head.yaw-w.yaw),dp=S.head.pitch-w.pitch,k=Math.min(1,dt*3);
+    if(Math.abs(dy)>16)w.yaw=wrap180(w.yaw+(dy-Math.sign(dy)*16)*k);
+    if(Math.abs(dp)>11)w.pitch=clamp(w.pitch+(dp-Math.sign(dp)*11)*k,-80,80);
+  }
   handsFrame(ts);applyHover();
   const cx=S.ew/2,cy=S.eh/2,hd=S.head,lr=Math.log(SMAX/SMIN);
   S.eyes.forEach(e=>{
-    e.world.style.transform=`rotate(${(-hd.roll).toFixed(2)}deg)`;
-    if(S.bg!=='cam')e.sky.style.transform=`translate3d(${(cx-(hd.yaw+360)*S.ppd).toFixed(1)}px,${(cy-2*S.eh+hd.pitch*S.ppd).toFixed(1)}px,0)`;
+    const rl=Math.abs(hd.roll)<1.2?0:hd.roll;      // inclinaciones mínimas se ignoran: menos trabajo para el navegador
+    const wt=rl===0?'none':`rotate(${(-rl).toFixed(1)}deg)`;
+    if(e.wt!==wt){e.wt=wt;e.world.style.transform=wt;}
+    if(S.bg!=='cam'){const st=`translate3d(${(cx-(hd.yaw+360)*S.ppd).toFixed(1)}px,${(cy-2*S.eh+hd.pitch*S.ppd).toFixed(1)}px,0)`;if(e.skt!==st){e.skt=st;e.sky.style.transform=st;}}
   });
   if(w&&w.visible){
     const c=winCenter(w),t=clamp(Math.log(w.s/SMIN)/lr,0,1),kt=((1-t)*(BH-76)).toFixed(0)+'px';
     for(let side=0;side<2;side++){
       const dx=S.eyes[side].sgn*S.conv/2,el=w.els[side];
-      el.style.transform=`translate3d(${(c.x+dx).toFixed(1)}px,${c.y.toFixed(1)}px,0) scale(${w.s.toFixed(4)}) translate(-${WL/2}px,-${HL/2}px)`;
+      const tr=`translate3d(${(c.x+dx).toFixed(1)}px,${c.y.toFixed(1)}px,0) scale(${w.s.toFixed(3)}) translate(-${WL/2}px,-${HL/2}px)`;
+      if(w.trc[side]!==tr){w.trc[side]=tr;el.style.transform=tr;}
       const kn=$('.kn',el);if(kn.style.top!==kt)kn.style.top=kt;
     }
   }
@@ -878,7 +1051,7 @@ function hudRefresh(ts){
     e.msgEl.textContent=ts<S.msgT?S.msg:S.msgHands;
     const showHint=ts<S.hintUntil&&!S.menuOpen&&!showMsg&&!S.act;
     e.hint.style.display=showHint?'block':'none';
-    if(showHint)e.hint.innerHTML='✋ Junta pulgar e índice <b>bien cerrados</b> = tocar o agarrar. Arrastra la barra de título para mover.<br>Barra derecha = tamaño · ☰ Menú = apps y fondos';
+    if(showHint)e.hint.innerHTML='✋ Pulgar e índice <b>bien cerrados</b> = tocar o agarrar. Barra de título = mover · barra derecha = tamaño.<br>🎯 Traer = la ventana viene a donde miras · ☰ Menú = apps, fondos y ajustes';
   });
   if(S.debug){
     const w=S.win;
@@ -913,7 +1086,7 @@ function bindDesktop(){
 const err=t=>{$('#err').textContent=t;};
 async function begin(){
   err('');
-  const opts={useCam:$('#usecam').checked,bg:$('#bg').value,autosync:$('#autosync').checked,cpu:$('#cpu').checked||QS.get('cpu')==='1'};
+  const opts={useCam:$('#usecam').checked,bg:$('#bg').value,autosync:$('#autosync').checked,cpu:$('#cpu').checked||QS.get('cpu')==='1',dict:$('#dict').checked};
   S.opts=opts;setSens(parseInt($('#sens').value,10)||0);
   // Lo que exige gesto del usuario se pide AQUÍ, de forma síncrona, antes de cualquier await.
   const oriP=(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function')?DeviceOrientationEvent.requestPermission():Promise.resolve('granted');
@@ -922,7 +1095,11 @@ async function begin(){
     v.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none;z-index:-1';document.body.append(v);
     S.vid=v;const pp=v.play();if(pp&&pp.then)pp.then(()=>{v.pause();v.currentTime=0;S.vidAct=true;}).catch(()=>{});
     ['loadeddata','seeked','play'].forEach(ev=>v.addEventListener(ev,vidDraw));
+    v.addEventListener('ended',()=>{const w=S.win;if(w&&w.kind==='file'&&w.view==='player'&&w.visible)openLib();});
   }catch(_){}
+  if(opts.dict){   // pide el permiso del micrófono AHORA (con el toque), para que luego el dictado no estorbe
+    try{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(SR){const r=new SR();r.onerror=()=>{};r.onend=()=>{};r.start();setTimeout(()=>{try{r.abort();}catch(_){}},500);}}catch(_){}
+  }
   const camP=opts.useCam?(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia?navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:960},height:{ideal:540},frameRate:{ideal:30}}}):Promise.reject(new Error('Sin cámara: abre la página por HTTPS'))):Promise.resolve(null);
   S.key=($('#key').value||'').trim();
   try{if(S.key)localStorage.setItem('vrk',S.key);}catch(_){}
@@ -971,7 +1148,7 @@ function actGo(){
   const a=$('#arm');a.style.display='flex';let n=7;$('#armN').textContent=n;
   const iv=setInterval(()=>{
     n--;$('#armN').textContent=n;
-    if(n<=0){clearInterval(iv);a.style.display='none';S.needCenter=true;S.hintUntil=performance.now()+25000;showWin();if(S.key)loadTrending(w);else{w.status='Falta la llave de API: pégala en la pantalla de inicio';setView(w,'home');}}
+    if(n<=0){clearInterval(iv);a.style.display='none';S.needCenter=true;S.hintUntil=performance.now()+25000;showWin();if(!w.items.length)showTab(w,authed()?'subs':'trend');}
   },1000);
 }
 function endSession(){
@@ -994,7 +1171,7 @@ function showResults(){
   const txt=[
     `Versión 3 · Duración: ${mmss(dur)}`,
     `Manos: ${S.delegate} · cámara ${S.stream?'sí':'no'} · auto-sync ${S.opts.autosync?'sí':'no'} · sensor ${S.oriOK?'sí':'simulado'} · pellizco ${SENS[S.sens].n} (${S.pinchOn}/${S.pinchOff})`,
-    `YouTube activado con sonido: ${S.ytActive?'sí':'no'} · sonido de Mis videos: ${S.vidAct?'sí':'no'} · llave: ${S.key?'sí':'no'}`,
+    `YouTube activado con sonido: ${S.ytActive?'sí':'no'} · sonido de Mis videos: ${S.vidAct?'sí':'no'} · llave: ${S.key?'sí':'no'} · sesión Google: ${authed()?'sí':'no'} · rendimiento: ${S.perf?'sí':'no'}`,
     `Navegador: ${navigator.userAgent}`,
     '',
     'minuto  fps medio / mínimo · detección manos · deriva YouTube · pellizcos acumulados',
@@ -1008,8 +1185,12 @@ try{
   const m=location.hash.match(/k=([\w-]+)/);
   if(m){localStorage.setItem('vrk',m[1]);history.replaceState(null,'',location.pathname+location.search);}
   const k=localStorage.getItem('vrk');if(k)$('#key').value=k;
+  const cid=localStorage.getItem('vrcid');if(cid)$('#cid').value=cid;
+  const t=JSON.parse(localStorage.getItem('vrt')||'null');if(t&&t.e>Date.now()+60000){S.tok=t.t;S.tokExp=t.e;}
 }catch(_){}
 $('#go').addEventListener('click',begin);
+$('#login').addEventListener('click',loginClick);
+if(authed())loginSt('✔ Sesión de Google activa',true);
 $('#actVid').addEventListener('click',actVidTap);
 $('#actGo').addEventListener('click',actGo);
 $('#copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('#resTxt').textContent);$('#copy').textContent='Copiado ✓';}catch(_){$('#copy').textContent='Selecciona el texto y copia';}});
@@ -1017,7 +1198,7 @@ $('#again').addEventListener('click',()=>location.reload());
 addEventListener('resize',()=>{geom();if(S.running)applyGeom();});
 addEventListener('orientationchange',()=>setTimeout(()=>{geom();if(S.running)applyGeom();},300));
 setSens(0);geom();
-window.__S=S;window.__handUpdate=handUpdate;window.__actGo=actGo;window.__openHome=openHome;window.__openLib=openLib;   // ganchos solo para pruebas
+window.__S=S;window.__showTab=showTab;window.__handUpdate=handUpdate;window.__actGo=actGo;window.__openHome=openHome;window.__openLib=openLib;   // ganchos solo para pruebas
 })();
 </script>
 </body>
