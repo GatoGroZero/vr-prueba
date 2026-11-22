@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#000000">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<title>VR Box · prueba v4</title>
+<title>VR Box · prueba v5</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:#000;color:#e8ecf4;font:15px/1.45 -apple-system,system-ui,"Segoe UI",sans-serif;overflow:hidden;overscroll-behavior:none}
@@ -151,8 +151,8 @@ body.portrait.running #rotate{display:flex}
 <body>
 
 <div id="start" class="screen">
-  <h1>Prueba VR · v4</h1>
-  <p class="sub">YouTube con tu cuenta, cola de videos, voz, botón Traer y más fluidez.</p>
+  <h1>Prueba VR · v5</h1>
+  <p class="sub">Manos más fiables (sin fantasmas), YouTube más ligero y selector de calidad.</p>
   <ol>
     <li>Pega tu llave de YouTube (solo la primera vez; se guarda en tu iPhone).</li>
     <li>Pon el teléfono en <b>horizontal</b> y toca <b>Iniciar</b>. Acepta cámara y movimiento.</li>
@@ -226,7 +226,7 @@ const mmss=s=>{s=Math.max(0,s||0);return pad(Math.floor(s/60))+':'+pad(Math.floo
 const decode=s=>{const t=document.createElement('textarea');t.innerHTML=s||'';return t.value;};
 
 /* ================= estado ================= */
-const newHand=()=>({x:0,y:0,seen:0,pinch:false,ratio:1,grab:null,vis:false,mouse:false,cnt:0,hist:[]});
+const newHand=()=>({x:0,y:0,rx:0,ry:0,fx:{},fy:{},age:0,armed:false,vc:null,seen:0,pinch:false,ratio:1,grab:null,vis:false,mouse:false,cnt:0,hist:[]});
 const S={
   running:false,opts:{},ew:0,eh:0,ppd:5,conv:0,bg:'cam',debug:true,menuOpen:false,panel:null,heads:[],
   bearing:0,yaw0:0,head:{yaw:0,pitch:0,roll:0},oriOK:false,sim:{on:false,yaw:0,pitch:0,keys:{}},needCenter:true,
@@ -234,8 +234,9 @@ const S={
   stream:null,camVideo:null,vid:null,vidAct:false,files:[],key:'',lm:null,delegate:'—',detErr:0,detMs:0,detCount:0,detFps:0,lastDet:0,lastVT:-1,detInterval:40,
   sens:0,pinchOn:.14,pinchOff:.32,pinchCount:0,
   frames:0,fps:0,log:[],t0:0,act:false,ytActive:false,
-  msg:'',msgT:0,msgHands:'',flash:-1,flashT:0,exitArmed:0,hintUntil:0,hoverKey:'',timers:[],cs:1.25,tok:null,tokExp:0,tokClient:null,follow:false,perf:false
+  msg:'',msgT:0,msgHands:'',flash:-1,flashT:0,exitArmed:0,hintUntil:0,hoverKey:'',timers:[],cs:1.25,tok:null,tokExp:0,tokClient:null,follow:false,perf:false,nh:1,q:1,dt:.016,lastQ:'',rej:{score:0,size:0,out:0,dup:0,fist:0}
 };
+try{S.nh=(+localStorage.getItem('vrnh')===2)?2:1;const sq=localStorage.getItem('vrq');S.q=sq==null?1:Math.max(0,Math.min(2,+sq||0));}catch(_){}
 function setSens(i){S.sens=i;const q=SENS[i];S.pinchOn=parseFloat(QS.get('on'))||q.on;S.pinchOff=parseFloat(QS.get('off'))||q.off;}
 
 /* ================= orientación de la cabeza ================= */
@@ -333,6 +334,12 @@ function vidPump(){
 /* ================= menú y HUD ================= */
 function closeMenu(){S.menuOpen=false;buildHud();}
 function bringWin(){showWin();setMsg('Ventana traída a donde miras');}
+function toggleHands(){
+  S.nh=S.nh===1?2:1;try{localStorage.setItem('vrnh',S.nh);}catch(_){}
+  try{if(S.lm&&S.lm.setOptions)S.lm.setOptions({numHands:S.nh});}catch(_){}
+  if(S.nh===1){const h=S.hands[1];if(h.pinch){h.pinch=false;pinchEnd(h);}h.vis=false;h.grab=null;}
+  setMsg(S.nh===1?'Una mano: más fluido y sin manos fantasma':'Dos manos: permite zoom con ambas');
+}
 function togglePerf(){S.perf=!S.perf;S.cs=S.perf?1:1.25;S.detInterval=S.perf?66:40;applyGeom();setMsg(S.perf?'Modo rendimiento: cámara más ligera':'Modo normal');}
 function uiItems(){
   const ew=S.ew,eh=S.eh,it=[];S.panel=null;S.heads=[];
@@ -369,8 +376,9 @@ function uiItems(){
        [()=>'❔ Ayuda',()=>{S.hintUntil=performance.now()+25000;closeMenu();}]]);
   row([[()=>'📌 Seguir: '+(S.follow?'sí':'no'),()=>{S.follow=!S.follow;setMsg(S.follow?'La ventana te sigue cuando miras lejos':'La ventana se queda fija');}],
        [()=>'⚡ Rendim.: '+(S.perf?'sí':'no'),togglePerf],
-       [()=>'🎯 Traer ventana',()=>{bringWin();closeMenu();}]]);
-  row([[()=>'↩ Cerrar',()=>closeMenu()],
+       [()=>'🖐 Manos: '+S.nh,toggleHands]]);
+  row([[()=>'🎞 Calidad: '+QUAL[S.q].n,cycleQuality],
+       [()=>'↩ Cerrar',()=>closeMenu()],
        [()=>S.exitArmed>performance.now()?'¿Seguro?':'✕ Salir',()=>{if(S.exitArmed>performance.now())endSession();else S.exitArmed=performance.now()+3000;},'red']]);
   return it;
 }
@@ -774,6 +782,15 @@ function loadYT(cb){
   const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';
   s.onerror=()=>setMsg('No cargó la API de YouTube',8000);document.head.append(s);
 }
+const QUAL=[{n:'Alta',w:960},{n:'Media',w:640},{n:'Baja',w:432}];
+function applyQuality(w){
+  if(!w||!w.pv)return;const q=QUAL[S.q];
+  [0,1].forEach(side=>{const f=w.pv[side]&&w.pv[side].querySelector('iframe');if(!f)return;
+    f.style.width=q.w+'px';f.style.height=Math.round(q.w*9/16)+'px';f.style.transformOrigin='0 0';
+    f.style.transform=q.w===BW?'none':'scale('+(BW/q.w).toFixed(4)+')';});
+}
+function cycleQuality(){S.q=(S.q+1)%3;try{localStorage.setItem('vrq',S.q);}catch(_){}applyQuality(S.win);setMsg('Calidad de YouTube: '+QUAL[S.q].n+' (menos calidad = más fluido)');}
+function qNow(){try{const w=S.win,p=w&&w.p&&w.p[0];const q=p&&p.getPlaybackQuality?p.getPlaybackQuality():'';if(q&&q!=='unknown')S.lastQ=q;return q||'';}catch(_){return '';}}
 function createYT(w){
   loadYT(()=>{
     const make=side=>{
@@ -781,12 +798,12 @@ function createYT(w){
       const vars={autoplay:0,mute:side?1:0,playsinline:1,controls:0,rel:0,modestbranding:1,disablekb:1,fs:0,iv_load_policy:3,enablejsapi:1};
       if(location.origin&&location.origin!=='null')vars.origin=location.origin;
       return new YT.Player(host,{width:BW,height:BH,videoId:WARM,playerVars:vars,events:{
-        onReady:()=>{w['r'+side]=true;w.ytReady=!!(w.r0&&w.r1);},
+        onReady:()=>{w['r'+side]=true;applyQuality(w);w.ytReady=!!(w.r0&&w.r1);},
         onStateChange:ev=>{if(side===0)onMasterState(w,ev.data);},
         onError:ev=>{if(side===0)onYTError(w,ev.data);}
       }});
     };
-    w.p=[make(0),make(1)];
+    w.p=[make(0),make(1)];applyQuality(w);
   });
 }
 function onMasterState(w,st){
@@ -803,7 +820,7 @@ function ytTick(w){
   if(!w.ytReady||w.kind!=='yt'||w.view!=='player'||!w.visible)return;
   const [a,b]=w.p;let sL,sR,tL,tR;
   try{sL=a.getPlayerState();sR=b.getPlayerState();tL=a.getCurrentTime();tR=b.getCurrentTime();}catch(_){return;}
-  w.drift=(tR-tL)*1000;
+  const dr=(tR-tL)*1000;if(!isFinite(dr))return;w.drift=dr;
   const now=performance.now();
   // si iOS no dejó arrancar con sonido, arranca en silencio para que al menos se vea
   if(w.loadT&&!w.fixed&&now-w.loadT>3500){
@@ -833,7 +850,7 @@ async function initHands(){
     S.msgHands='Cargando manos…';
     const mod=await import(MP_BASE+'/vision_bundle.mjs');
     const fs=await mod.FilesetResolver.forVisionTasks(MP_BASE+'/wasm');
-    const build=delegate=>mod.HandLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:MODEL_URL,delegate},runningMode:'VIDEO',numHands:2,minHandDetectionConfidence:.5,minHandPresenceConfidence:.5,minTrackingConfidence:.5});
+    const build=delegate=>mod.HandLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:MODEL_URL,delegate},runningMode:'VIDEO',numHands:S.nh,minHandDetectionConfidence:.65,minHandPresenceConfidence:.55,minTrackingConfidence:.55});
     S.build=build;
     if(S.opts.cpu){S.lm=await build('CPU');S.delegate='CPU';}
     else{try{S.lm=await build('GPU');S.delegate='GPU';}catch(e){console.warn('GPU falló',e);S.lm=await build('CPU');S.delegate='CPU';}}
@@ -846,7 +863,8 @@ async function swapCPU(){
 function maybeDetect(now){
   const v=S.camVideo;
   if(!S.lm||!S.stream||!v||v.readyState<2||!v.videoWidth)return;
-  if(now-S.lastDet<S.detInterval||v.currentTime===S.lastVT)return;
+  const trk=S.hands.some(h=>h.vis&&now-h.seen<500),itv=trk?S.detInterval:(S.perf?220:110);   // sin mano a la vista, se vigila más despacio
+  if(now-S.lastDet<itv||v.currentTime===S.lastVT)return;
   S.lastVT=v.currentTime;S.lastDet=now;
   const t0=performance.now();let res;
   try{res=S.lm.detectForVideo(v,t0);S.detErr=0;}
@@ -854,35 +872,72 @@ function maybeDetect(now){
   const dt=performance.now()-t0;S.detMs=S.detMs?S.detMs*.8+dt*.2:dt;S.detCount++;
   processHands(res,v,now);
 }
+const HAND_MIN_SCORE=.72;
+const iou=(a,b)=>{const x0=Math.max(a[0],b[0]),y0=Math.max(a[1],b[1]),x1=Math.min(a[2],b[2]),y1=Math.min(a[3],b[3]);const i=Math.max(0,x1-x0)*Math.max(0,y1-y0),u=(a[2]-a[0])*(a[3]-a[1])+(b[2]-b[0])*(b[3]-b[1])-i;return u>0?i/u:0;};
 function processHands(res,v,now){
   const vw=v.videoWidth,vh=v.videoHeight;
   const sc=Math.max(S.ew/vw,S.eh/vh),ox=(S.ew-vw*sc)/2,oy=(S.eh-vh*sc)/2;   // mismo recorte que el fondo de cámara
   const hs=res.handedness||res.handednesses||[];
-  const used=[false,false];
+  const dd=(a,b)=>Math.hypot((a.x-b.x)*vw,(a.y-b.y)*vh);
+  const cand=[];
   (res.landmarks||[]).forEach((lm,i)=>{
-    const lab=hs[i]&&hs[i][0]&&hs[i][0].categoryName;
-    let slot=lab==='Left'?0:1;if(used[slot])slot=1-slot;used[slot]=true;
-    const dd=(a,b)=>Math.hypot((a.x-b.x)*vw,(a.y-b.y)*vh);
-    const th=lm[4],ix=lm[8];
-    const size2=Math.max(dd(lm[0],lm[9]),dd(lm[5],lm[17])*1.2,dd(lm[0],lm[5]))||1;
-    const r2=dd(th,ix)/size2;
-    let ratio=r2;
-    const wl=res.worldLandmarks&&res.worldLandmarks[i];
+    const score=hs[i]&&hs[i][0]&&hs[i][0].score!=null?hs[i][0].score:1,lab=hs[i]&&hs[i][0]&&hs[i][0].categoryName;
+    let x0=9,x1=-9,y0=9,y1=-9,out=0;
+    lm.forEach(q=>{if(q.x<x0)x0=q.x;if(q.x>x1)x1=q.x;if(q.y<y0)y0=q.y;if(q.y>y1)y1=q.y;if(q.x<0||q.x>1||q.y<0||q.y>1)out++;});
+    const size=Math.max(dd(lm[0],lm[9]),dd(lm[5],lm[17])*1.2,dd(lm[0],lm[5]))||1;
+    if(score<HAND_MIN_SCORE){S.rej.score++;return;}                      // detección dudosa
+    if(size<.045*Math.max(vw,vh)){S.rej.size++;return;}                   // demasiado pequeña: ruido
+    if(out>7||(x0+x1)/2<-.02||(x0+x1)/2>1.02||(y0+y1)/2<-.02||(y0+y1)/2>1.02){S.rej.out++;return;}   // casi fuera de cuadro
+    cand.push({lm,lab,score,size,box:[x0*vw,y0*vh,x1*vw,y1*vh],c:[(x0+x1)/2*vw,(y0+y1)/2*vh]});
+  });
+  const ref=S.hands.find(h=>h.vis&&!h.mouse&&now-h.seen<500&&h.vc);
+  cand.forEach(c=>{c.rank=c.score-(ref?Math.min(1,Math.hypot(ref.vc[0]-c.c[0],ref.vc[1]-c.c[1])/(.5*vw))*.25:0);});   // prefiere la mano que ya seguía
+  cand.sort((a,b)=>b.rank-a.rank);
+  const keep=[];
+  for(const c of cand){
+    if(keep.length>=S.nh)break;
+    if(keep.some(k=>iou(k.box,c.box)>.25||Math.hypot(k.c[0]-c.c[0],k.c[1]-c.c[1])<.55*Math.max(k.size,c.size))){S.rej.dup++;continue;}   // la "segunda mano" pegada a la primera es un duplicado
+    keep.push(c);
+  }
+  const taken=[false,false];
+  keep.forEach(c=>{
+    let slot;
+    if(S.nh===1)slot=0;
+    else{
+      let best=-1,bd=1e9;
+      for(let k=0;k<2;k++){const h=S.hands[k];if(taken[k]||!h.vis||h.mouse||now-h.seen>400||!h.vc)continue;const d=Math.hypot(h.vc[0]-c.c[0],h.vc[1]-c.c[1]);if(d<bd){bd=d;best=k;}}
+      slot=(best>=0&&bd<.35*vw)?best:(c.lab==='Left'?0:1);if(taken[slot])slot=1-slot;
+    }
+    taken[slot]=true;
+    const lm=c.lm,th=lm[4],ix=lm[8];
+    const r2=dd(th,ix)/c.size;let ratio=r2;
+    const wl=res.worldLandmarks&&res.worldLandmarks[res.landmarks.indexOf(lm)];
     if(wl){
       const d3=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
       const size3=Math.max(d3(wl[0],wl[9]),d3(wl[5],wl[17])*1.2)||.1;
       ratio=(r2+d3(wl[4],wl[8])/size3)/2;
     }
-    handUpdate(slot,((th.x+ix.x)/2)*vw*sc+ox,((th.y+ix.y)/2)*vh*sc+oy,ratio,now);
+    const wd=k=>dd(lm[0],lm[k]),tight=(t,m)=>wd(t)<wd(m)*1.15;
+    const fist=tight(8,5)&&tight(12,9)&&tight(16,13)&&tight(20,17);        // puño cerrado: no es un pellizco
+    S.hands[slot].vc=c.c;
+    handUpdate(slot,((th.x+ix.x)/2)*vw*sc+ox,((th.y+ix.y)/2)*vh*sc+oy,ratio,now,fist);
   });
 }
-function handUpdate(i,px,py,ratio,now){
+function lpA(cut,dt){const tau=1/(2*Math.PI*cut);return 1/(1+tau/dt);}
+function euro(f,x,now){          // filtro "1€": quieto = sin temblor, rápido = sin retraso
+  if(f.t==null){f.x=x;f.dx=0;f.t=now;return x;}
+  const dt=Math.max(.008,(now-f.t)/1000);f.t=now;
+  f.dx+=((x-f.x)/dt-f.dx)*lpA(1.2,dt);
+  f.x+=(x-f.x)*lpA(1.6+.012*Math.abs(f.dx),dt);
+  return f.x;
+}
+function handUpdate(i,px,py,ratio,now,fist){
   const h=S.hands[i],fresh=now-h.seen>300||!h.vis;
-  if(h.mouse||fresh){h.x=px;h.y=py;h.ratio=ratio;h.cnt=0;}
-  else{
-    const sp=Math.hypot(px-h.x,py-h.y),a=clamp(.28+sp*.03,.28,.85);
-    h.x+=(px-h.x)*a;h.y+=(py-h.y)*a;h.ratio=h.ratio*.5+ratio*.5;
-  }
+  if(h.mouse){h.x=px;h.y=py;h.rx=px;h.ry=py;h.ratio=ratio;h.cnt=0;h.armed=true;}
+  else if(fresh){
+    if(h.pinch){h.pinch=false;pinchEnd(h);}
+    h.fx={};h.fy={};h.x=euro(h.fx,px,now);h.y=euro(h.fy,py,now);h.rx=h.x;h.ry=h.y;h.ratio=ratio;h.cnt=0;h.age=0;h.armed=false;
+  }else{h.x=euro(h.fx,px,now);h.y=euro(h.fy,py,now);{const k=ratio<h.ratio?.75:.5;h.ratio=h.ratio*(1-k)+ratio*k;}h.age++;}   // cerrar reacciona rápido; abrir es más cauteloso (evita soltar por un parpadeo)
   h.seen=now;h.vis=true;
   h.hist.push({t:now,x:h.x,y:h.y});while(h.hist.length&&now-h.hist[0].t>600)h.hist.shift();
   const closing=h.ratio<S.pinchOn,opening=h.ratio>S.pinchOff;
@@ -891,8 +946,13 @@ function handUpdate(i,px,py,ratio,now){
     else if(h.pinch&&opening){h.pinch=false;pinchEnd(h);}
     return;
   }
-  if(!h.pinch){h.cnt=closing?h.cnt+1:0;if(h.cnt>=2){h.pinch=true;h.cnt=0;pinchStart(h);}}
-  else{h.cnt=opening?h.cnt+1:0;if(h.cnt>=2){h.pinch=false;h.cnt=0;pinchEnd(h);}}
+  // una mano recién aparecida no puede pellizcar hasta que se la vea ABIERTA unos cuadros (así un fantasma que nace "cerrado" no hace clic)
+  if(!h.armed){if(h.age>=3&&opening)h.armed=true;return;}
+  if(!h.pinch){
+    if(closing&&fist){S.rej.fist++;h.cnt=0;return;}
+    h.cnt=closing?h.cnt+(h.ratio<S.pinchOn*.75?2:1):0;     // un cierre claro cuenta doble: menos retraso
+    if(h.cnt>=2){h.pinch=true;h.cnt=0;pinchStart(h);}
+  }else{h.cnt=opening?h.cnt+1:0;if(h.cnt>=2){h.pinch=false;h.cnt=0;pinchEnd(h);}}
 }
 function histAt(h,t){for(let i=h.hist.length-1;i>=0;i--)if(h.hist[i].t<=t)return h.hist[i];return h.hist[0]||{x:h.x,y:h.y};}
 function pinchStart(h){
@@ -910,10 +970,10 @@ function pinchStart(h){
     const g=r.act?r.act(hit.lx,hit.ly):null;
     h.grab=g==='seek'?{type:'seek',win:w}:{type:'ui'};return;
   }
-  const pw=toWorld(h.x,h.y);
+  const pw=toWorld(h.rx,h.ry);
   const other=S.hands.find(o=>o!==h&&o.grab&&o.grab.type==='move'&&o.grab.win===w);
   if(other){
-    S.zoom={win:w,hs:[h,other],d0:Math.hypot(h.x-other.x,h.y-other.y)||1,s0:w.s};
+    S.zoom={win:w,hs:[h,other],d0:Math.hypot(h.rx-other.rx,h.ry-other.ry)||1,s0:w.s};
     h.grab={type:'zoom',win:w};other.grab={type:'zoom',win:w};return;
   }
   h.grab={type:'move',win:w,offYaw:wrap180(w.yaw-cursorYaw(pw)),offPitch:w.pitch-cursorPitch(pw)};
@@ -927,7 +987,7 @@ function handsFrame(now){
   S.hands.forEach(h=>{
     if(h.vis&&!h.mouse&&now-h.seen>350){h.vis=false;h.cnt=0;if(h.pinch){h.pinch=false;pinchEnd(h);}}
     const g=h.grab;if(!g||!h.vis)return;
-    const pw=toWorld(h.x,h.y);
+    const pw=toWorld(h.rx,h.ry);
     if(g.type==='move'){g.win.yaw=wrap180(cursorYaw(pw)+g.offYaw);g.win.pitch=clamp(cursorPitch(pw)+g.offPitch,-80,80);}
     else if(g.type==='slider'){
       const w=g.win,c=winCenter(w),ly=(pw.y-c.y)/w.s+HL/2;
@@ -942,7 +1002,7 @@ function handsFrame(now){
   if(z){
     const [a,b]=z.hs;
     if(!a.pinch||!b.pinch||!a.vis||!b.vis){z.hs.forEach(o=>{o.grab=null;});S.zoom=null;}
-    else z.win.s=clamp(z.s0*(Math.hypot(a.x-b.x,a.y-b.y)/z.d0),SMIN,SMAX);
+    else z.win.s=clamp(z.s0*(Math.hypot(a.rx-b.rx,a.ry-b.ry)/z.d0),SMIN,SMAX);
   }
 }
 function winHit(p){
@@ -1006,6 +1066,7 @@ function tick(ts){
     if(Math.abs(dy)>16)w.yaw=wrap180(w.yaw+(dy-Math.sign(dy)*16)*k);
     if(Math.abs(dp)>11)w.pitch=clamp(w.pitch+(dp-Math.sign(dp)*11)*k,-80,80);
   }
+  S.dt=dt;{const a=1-Math.exp(-dt*24);S.hands.forEach(h=>{if(h.mouse||!h.vis){h.rx=h.x;h.ry=h.y;}else{h.rx+=(h.x-h.rx)*a;h.ry+=(h.y-h.ry)*a;}});}   // el cursor se interpola entre detecciones: se mueve fluido aunque la detección sea a ~15/s
   handsFrame(ts);applyHover();
   const cx=S.ew/2,cy=S.eh/2,hd=S.head,lr=Math.log(SMAX/SMIN);
   S.eyes.forEach(e=>{
@@ -1029,7 +1090,7 @@ function tick(ts){
       const c=e.cur[i];if(!c)return;
       if(h.vis&&!S.act){
         const k=h.pinch?1:clamp(1-.5*clamp((S.pinchOff-h.ratio)/(S.pinchOff-S.pinchOn),0,1),.5,1);
-        c.style.display='block';c.style.transform=`translate3d(${(h.x+dx).toFixed(1)}px,${h.y.toFixed(1)}px,0) scale(${k.toFixed(2)})`;
+        c.style.display='block';c.style.transform=`translate3d(${(h.rx+dx).toFixed(1)}px,${h.ry.toFixed(1)}px,0) scale(${k.toFixed(2)})`;
         const cls='cur'+(h.pinch?' p':'');if(c.className!==cls)c.className=cls;
       }else c.style.display='none';
     });
@@ -1059,7 +1120,7 @@ function hudRefresh(ts){
     const rs=S.hands.map(h=>h.vis?h.ratio.toFixed(2):'—').join(' ');
     const l1=`fps ${S.fps} · manos ${S.delegate} ${S.detMs?S.detMs.toFixed(0)+'ms':'—'} ${S.detFps||0}/s · ${nh}✋ cierre ${rs} (<${S.pinchOn})`;
     const l2=`yaw ${S.head.yaw.toFixed(0)} pit ${S.head.pitch.toFixed(0)} roll ${S.head.roll.toFixed(0)} · sep ${S.conv} · ${mmss((ts-S.t0)/1000)}`;
-    const l3=(w&&w.kind==='yt'&&w.view==='player'&&w.ytReady)?`YT Δ ${w.drift>=0?'+':''}${w.drift.toFixed(0)}ms ajustes ${w.nudges} saltos ${w.seeks}`:(S.sim.on?'sim: flechas = cabeza':'');
+    const l3=(w&&w.kind==='yt'&&w.view==='player'&&w.ytReady)?`YT Δ ${w.drift>=0?'+':''}${w.drift.toFixed(0)}ms ajustes ${w.nudges} saltos ${w.seeks} · ${qNow()||'—'}`:(S.sim.on?'sim: flechas = cabeza':'');
     S.eyes.forEach(e=>{e.dbg.textContent=l1+'\n'+l2+'\n'+l3;});
   }
 }
@@ -1067,7 +1128,7 @@ function statsTick(){
   if(!S.running)return;
   S.fps=S.frames;S.frames=0;S.detFps=S.detCount;S.detCount=0;
   const w=S.win;
-  S.log.push({t:(performance.now()-S.t0)/1000,fps:S.fps,det:S.detFps,detMs:S.detMs,drift:(w&&w.kind==='yt'&&w.view==='player'&&w.ytReady)?Math.abs(w.drift):0,nudges:w?w.nudges:0,seeks:w?w.seeks:0,pinches:S.pinchCount});
+  S.log.push({t:(performance.now()-S.t0)/1000,fps:S.fps,det:S.detFps,detMs:S.detMs,drift:(w&&w.kind==='yt'&&w.view==='player'&&w.ytReady)?Math.abs(w.drift):0,nudges:w?w.nudges:0,seeks:w?w.seeks:0,q:qNow(),pinches:S.pinchCount});
 }
 
 /* ================= entrada de escritorio (ratón + teclado) ================= */
@@ -1100,7 +1161,7 @@ async function begin(){
   if(opts.dict){   // pide el permiso del micrófono AHORA (con el toque), para que luego el dictado no estorbe
     try{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(SR){const r=new SR();r.onerror=()=>{};r.onend=()=>{};r.start();setTimeout(()=>{try{r.abort();}catch(_){}},500);}}catch(_){}
   }
-  const camP=opts.useCam?(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia?navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:960},height:{ideal:540},frameRate:{ideal:30}}}):Promise.reject(new Error('Sin cámara: abre la página por HTTPS'))):Promise.resolve(null);
+  const camP=opts.useCam?(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia?navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:640},height:{ideal:480},frameRate:{ideal:30}}}):Promise.reject(new Error('Sin cámara: abre la página por HTTPS'))):Promise.resolve(null);
   S.key=($('#key').value||'').trim();
   try{if(S.key)localStorage.setItem('vrk',S.key);}catch(_){}
   S.files=[...$('#files').files].map(f=>({title:f.name,url:URL.createObjectURL(f)}));
@@ -1169,9 +1230,10 @@ function showResults(){
     rows.push(`${pad(m)}:00  fps ${avg(g.map(x=>x.fps)).toFixed(0).padStart(2)} (mín ${Math.min(...g.map(x=>x.fps))})  manos ${avg(g.map(x=>x.det)).toFixed(0).padStart(2)}/s ${avg(g.map(x=>x.detMs||0)).toFixed(0)}ms  Δyt máx ${Math.max(...g.map(x=>x.drift)).toFixed(0)}ms  ajustes ${g[g.length-1].nudges} saltos ${g[g.length-1].seeks}  pellizcos ${g[g.length-1].pinches}`);
   }
   const txt=[
-    `Versión 3 · Duración: ${mmss(dur)}`,
+    `Versión 5 · Duración: ${mmss(dur)}`,
     `Manos: ${S.delegate} · cámara ${S.stream?'sí':'no'} · auto-sync ${S.opts.autosync?'sí':'no'} · sensor ${S.oriOK?'sí':'simulado'} · pellizco ${SENS[S.sens].n} (${S.pinchOn}/${S.pinchOff})`,
     `YouTube activado con sonido: ${S.ytActive?'sí':'no'} · sonido de Mis videos: ${S.vidAct?'sí':'no'} · llave: ${S.key?'sí':'no'} · sesión Google: ${authed()?'sí':'no'} · rendimiento: ${S.perf?'sí':'no'}`,
+    `Manos: ${S.nh} · calidad YouTube: ${QUAL[S.q].n} (YouTube reporta: ${S.lastQ||'—'}) · descartes: dudosas ${S.rej.score}, diminutas ${S.rej.size}, fuera ${S.rej.out}, duplicadas ${S.rej.dup}, puños ${S.rej.fist}`,
     `Navegador: ${navigator.userAgent}`,
     '',
     'minuto  fps medio / mínimo · detección manos · deriva YouTube · pellizcos acumulados',
@@ -1198,7 +1260,7 @@ $('#again').addEventListener('click',()=>location.reload());
 addEventListener('resize',()=>{geom();if(S.running)applyGeom();});
 addEventListener('orientationchange',()=>setTimeout(()=>{geom();if(S.running)applyGeom();},300));
 setSens(0);geom();
-window.__S=S;window.__showTab=showTab;window.__handUpdate=handUpdate;window.__actGo=actGo;window.__openHome=openHome;window.__openLib=openLib;   // ganchos solo para pruebas
+window.__S=S;window.__showTab=showTab;window.__processHands=processHands;window.__applyQ=applyQuality;window.__handUpdate=handUpdate;window.__actGo=actGo;window.__openHome=openHome;window.__openLib=openLib;   // ganchos solo para pruebas
 })();
 </script>
 </body>
