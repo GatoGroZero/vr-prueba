@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<title>VR Box · prueba descartable</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#000;color:#e8ecf4;font:15px/1.45 -apple-system,system-ui,"Segoe UI",sans-serif;overflow:hidden;overscroll-behavior:none}
+button,input,select{font:inherit;color:inherit}
+.screen{position:fixed;inset:0;overflow:auto;padding:max(18px,env(safe-area-inset-top)) 18px 48px;background:#0b0d12;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+.screen h1{font-size:21px;margin:4px 0 2px}
+.screen p.sub{margin:0 0 14px;color:#9aa4b8}
+.screen ol{padding-left:20px;margin:0 0 14px;color:#cfd6e6}
+.screen li{margin:3px 0}
+.card{background:#141926;border:1px solid #232b3d;border-radius:14px;padding:14px;margin:10px 0}
+.card label{display:block;margin:10px 0 4px;color:#9aa4b8;font-size:13px}
+.card input[type=text],.card select{width:100%;padding:11px 12px;border-radius:10px;border:1px solid #2b3550;background:#0d111b}
+.card .row{display:flex;align-items:center;gap:10px;margin-top:10px;color:#cfd6e6}
+.card .row input{width:20px;height:20px}
+.big{width:100%;padding:15px;margin-top:14px;border:0;border-radius:14px;background:#4f7cff;color:#fff;font-weight:700;font-size:17px}
+.big.alt{background:#232b3d}
+.small{font-size:12.5px;color:#8591a8;margin-top:12px}
+#err{color:#ff8b8b;margin-top:10px;white-space:pre-wrap}
+#count{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;background:#000;z-index:50;text-align:center;padding:20px}
+#count b{font-size:84px;line-height:1}
+#count span{color:#9aa4b8;margin-top:10px;max-width:520px}
+#rotate{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#000;z-index:60;font-size:20px;text-align:center;padding:30px}
+body.portrait.running #rotate{display:flex}
+
+#vr{position:fixed;inset:0;display:none;background:#000;touch-action:none;overflow:hidden}
+.eye{position:absolute;top:0;bottom:0;width:50%;overflow:hidden;background:#000}
+.eye.l{left:0}.eye.r{right:0}
+.cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+.world{position:absolute;inset:0;transform-origin:50% 50%;will-change:transform}
+.sky{position:absolute;left:0;top:0;will-change:transform;background-repeat:repeat-x}
+.sky.dark{background-image:
+ radial-gradient(circle at 12% 40%,rgba(255,255,255,.9) 0 1px,transparent 2px),
+ radial-gradient(circle at 27% 45%,rgba(255,255,255,.6) 0 1px,transparent 2px),
+ radial-gradient(circle at 41% 38.5%,rgba(255,255,255,.8) 0 1px,transparent 2px),
+ radial-gradient(circle at 56% 43%,rgba(255,255,255,.7) 0 1px,transparent 2px),
+ radial-gradient(circle at 71% 39.5%,rgba(255,255,255,.9) 0 1px,transparent 2px),
+ radial-gradient(circle at 86% 46%,rgba(255,255,255,.6) 0 1px,transparent 2px),
+ linear-gradient(#02030a 0%,#070a14 49.8%,#0d1220 50.1%,#020308 100%)}
+.sky.sun{background-image:
+ radial-gradient(circle at 25% 47%,#fff7d6 0 18px,#ffc46b 34px,rgba(255,130,70,.45) 150px,transparent 300px),
+ radial-gradient(ellipse 170px 26px at 62% 41%,rgba(255,255,255,.28),transparent),
+ radial-gradient(ellipse 120px 20px at 80% 44%,rgba(255,255,255,.22),transparent),
+ radial-gradient(ellipse 150px 22px at 8% 39%,rgba(255,255,255,.2),transparent),
+ linear-gradient(#18235e 0%,#7a3f8f 40%,#f07a5a 48%,#ffb26b 49.8%,#2a4f7a 50.2%,#0b2b4f 56%,#06182e 100%)}
+
+.win{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;pointer-events:none;background:#0a0c12;box-shadow:0 0 0 3px rgba(255,255,255,.22),0 30px 80px rgba(0,0,0,.6)}
+.win .tb{position:absolute;left:0;top:0;width:960px;height:80px;display:flex;align-items:center;background:#1a2132;color:#e8ecf4;font-size:36px;font-weight:600;padding-left:26px}
+.win .tt{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.win .bt,.win .bx{width:110px;height:80px;display:flex;align-items:center;justify-content:center;font-size:42px}
+.win .bx{background:#7a2a38}.win .bt{background:#2a3a5e}
+.win .body{position:absolute;left:0;top:80px;width:960px;height:540px;background:#000}
+.win .body iframe,.win .body canvas{position:absolute;left:0;top:0;width:960px;height:540px;border:0;display:block}
+.win .rz{position:absolute;right:0;bottom:0;width:90px;height:90px;background:linear-gradient(135deg,transparent 50%,rgba(255,255,255,.8) 50%)}
+
+.hud{position:absolute;inset:0;pointer-events:none;font-family:ui-monospace,Menlo,monospace}
+.hb{position:absolute;display:flex;align-items:center;justify-content:center;font:600 13px -apple-system,system-ui,sans-serif;color:#fff;border-radius:12px;background:rgba(18,22,32,.78);border:1px solid rgba(255,255,255,.2)}
+.hb.hot{background:rgba(79,124,255,.85);border-color:#fff}
+.hb.hit{background:#fff;color:#111}
+.cur{position:absolute;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.55);display:none;will-change:transform}
+.cur.p{background:rgba(79,124,255,.9);border-color:#fff;width:22px;height:22px;margin:-11px 0 0 -11px}
+.dbg{position:absolute;left:0;right:0;top:6px;text-align:center;font-size:10px;line-height:1.35;color:#9dffb0;text-shadow:0 0 3px #000,0 0 3px #000;white-space:pre}
+.dbg.off{display:none}
+.msg{position:absolute;left:8px;right:8px;top:52px;text-align:center;font:600 12px -apple-system,system-ui,sans-serif;color:#ffd479;text-shadow:0 0 4px #000}
+
+#results pre{white-space:pre-wrap;background:#0d111b;border:1px solid #232b3d;border-radius:10px;padding:12px;font-size:12px;overflow:auto;user-select:text;-webkit-user-select:text}
+</style>
+</head>
+<body>
+
+<div id="start" class="screen">
+  <h1>Prueba VR · iPhone en VR Box</h1>
+  <p class="sub">Prueba descartable. Mide tres cosas: video sincronizado entre ojos, gestos con las manos y cuánto se calienta el teléfono.</p>
+  <ol>
+    <li>Gira el teléfono a <b>horizontal</b> y apaga el bloqueo de rotación.</li>
+    <li>Pega un video de YouTube y toca <b>Iniciar</b>.</li>
+    <li>Acepta cámara y movimiento. Tienes unos segundos para meterlo en la caja.</li>
+    <li>Pellizca (pulgar + índice) para mover una ventana; pellizca con las dos manos sobre ella para agrandarla o achicarla.</li>
+  </ol>
+  <div class="card">
+    <label for="yt">Video de YouTube (enlace o ID)</label>
+    <input id="yt" type="text" value="https://www.youtube.com/watch?v=aqz-KE-bpKQ" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <label for="bg">Fondo inicial</label>
+    <select id="bg"><option value="cam">Cámara (ver mi cuarto)</option><option value="sun">Atardecer (3D)</option><option value="dark">Oscuro (3D)</option></select>
+    <div class="row"><input id="usecam" type="checkbox" checked><label for="usecam" style="margin:0;color:inherit;font-size:15px">Usar cámara (manos y fondo)</label></div>
+    <div class="row"><input id="autosync" type="checkbox" checked><label for="autosync" style="margin:0;color:inherit;font-size:15px">Auto-sincronizar YouTube entre ojos</label></div>
+    <div class="row"><input id="cpu" type="checkbox"><label for="cpu" style="margin:0;color:inherit;font-size:15px">Manos en CPU (si la detección falla)</label></div>
+  </div>
+  <button id="go" class="big">Iniciar</button>
+  <div id="err"></div>
+  <p class="small">Pantalla completa: Compartir → Añadir a pantalla de inicio, y ábrela desde ahí. Si el video de YouTube sale sin sonido en esta prueba es normal; lo que importa es la imagen.</p>
+</div>
+
+<div id="count"><b id="cn">8</b><span>Ponte el visor. Al terminar la cuenta, mira al frente: ahí aparece la ventana.</span></div>
+<div id="rotate">Gira el teléfono a horizontal</div>
+<div id="vr"></div>
+
+<div id="results" class="screen" style="display:none">
+  <h1>Resultados</h1>
+  <p class="sub">Copia esto y pásamelo, junto con lo que sentiste.</p>
+  <pre id="resTxt"></pre>
+  <button id="copy" class="big">Copiar</button>
+  <button id="again" class="big alt">Volver al inicio</button>
+</div>
+
+<script>
+(()=>{
+'use strict';
+/* ================= constantes ================= */
+const WL=960, TB=80, BW=960, BH=540, HL=BH+TB;       // ventana: tamaño de layout (se escala con CSS)
+const QS=new URLSearchParams(location.search);
+const MP4_URL=QS.get('mp4')||'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
+const MP_VER='1.2.3';
+const MP_BASE='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+MP_VER;
+const MODEL_URL='https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
+const D=Math.PI/180;
+const $=(s,r=document)=>r.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const wrap180=a=>{a=(a+180)%360;if(a<0)a+=360;return a-180;};
+const mk=(tag,cls)=>{const e=document.createElement(tag);if(cls)e.className=cls;return e;};
+const pad=n=>String(n).padStart(2,'0');
+const mmss=s=>pad(Math.floor(s/60))+':'+pad(Math.floor(s%60));
+
+/* ================= estado ================= */
+const newHand=()=>({x:0,y:0,seen:0,pinch:false,ratio:1,grab:null,vis:false,mouse:false});
+const S={
+  running:false,opts:{},ew:0,eh:0,ppd:5,conv:0,bg:'cam',debug:true,
+  bearing:0,yaw0:0,head:{yaw:0,pitch:0,roll:0},oriSeen:0,sim:{on:false,yaw:0,pitch:0,keys:{}},needCenter:true,
+  eyes:[],wins:[],hands:[newHand(),newHand()],zoom:null,
+  stream:null,lm:null,delegate:'—',detErr:0,detMs:0,detCount:0,lastDet:0,lastVT:-1,detInterval:33,
+  pinchOn:parseFloat(new URLSearchParams(location.search).get('on'))||.28,pinchOff:parseFloat(new URLSearchParams(location.search).get('off'))||.45,
+  frames:0,fps:0,log:[],t0:0,nextId:1,primed:null,primedUsed:false,
+  msg:'',msgT:0,flash:-1,flashT:0,exitArmed:0,timers:[]
+};
+
+/* ================= orientación de la cabeza ================= */
+// R = Rz(alpha)·Rx(beta)·Ry(gamma). Dirección de la cámara trasera = -Z del teléfono.
+function onOri(e){
+  if(e.alpha==null||e.beta==null||e.gamma==null)return;
+  S.oriSeen=performance.now();S.oriOK=true;
+  const a=e.alpha*D,b=e.beta*D,g=e.gamma*D;
+  const ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b),cg=Math.cos(g),sg=Math.sin(g);
+  const R=[[ca*cg-sa*sb*sg,-sa*cb,ca*sg+sa*sb*cg],[sa*cg+ca*sb*sg,ca*cb,sa*sg-ca*sb*cg],[-cb*sg,sb,cb*cg]];
+  const f=[-R[0][2],-R[1][2],-R[2][2]];
+  S.bearing=Math.atan2(f[0],f[1])/D;
+  S.rawPitch=Math.asin(clamp(f[2],-1,1))/D;
+  // "arriba" de la pantalla (según el lado en que esté girado el teléfono) → para el roll
+  const up=[R[2][0],R[2][1],R[2][2]];
+  const ui=Math.abs(up[0])>Math.abs(up[1])?[Math.sign(up[0]),0,0]:[0,Math.sign(up[1])||1,0];
+  const U=[0,1,2].map(i=>R[i][0]*ui[0]+R[i][1]*ui[1]+R[i][2]*ui[2]);
+  const k=f[2];let Z=[-k*f[0],-k*f[1],1-k*f[2]];const n=Math.hypot(Z[0],Z[1],Z[2])||1;Z=Z.map(x=>x/n);
+  const cr=[Z[1]*U[2]-Z[2]*U[1],Z[2]*U[0]-Z[0]*U[2],Z[0]*U[1]-Z[1]*U[0]];
+  S.rawRoll=Math.atan2(cr[0]*f[0]+cr[1]*f[1]+cr[2]*f[2],Z[0]*U[0]+Z[1]*U[1]+Z[2]*U[2])/D;
+}
+function updateHead(dt){
+  if(S.sim.on){
+    const k=S.sim.keys,v=60*dt;
+    if(k.ArrowLeft||k.a)S.sim.yaw-=v;if(k.ArrowRight||k.d)S.sim.yaw+=v;
+    if(k.ArrowUp||k.w)S.sim.pitch=clamp(S.sim.pitch+v,-80,80);if(k.ArrowDown||k.s)S.sim.pitch=clamp(S.sim.pitch-v,-80,80);
+    S.bearing=S.sim.yaw;S.rawPitch=S.sim.pitch;S.rawRoll=0;
+  }
+  if(S.needCenter&&(S.oriOK||S.sim.on)){S.yaw0=S.bearing;S.needCenter=false;}
+  S.head.yaw=wrap180(S.bearing-S.yaw0);
+  S.head.pitch=S.rawPitch||0;
+  S.head.roll=S.rawRoll||0;
+}
+function recentre(){S.yaw0=S.bearing;}
+
+/* ================= geometría ================= */
+function geom(){S.ew=innerWidth/2;S.eh=innerHeight;S.ppd=S.eh/75;document.body.classList.toggle('portrait',innerHeight>innerWidth);}
+const worldToScreen=(x,y)=>{ // inverso de la rotación del mundo: pantalla → mundo
+  const cx=S.ew/2,cy=S.eh/2,a=S.head.roll*D,dx=x-cx,dy=y-cy;
+  return {x:cx+dx*Math.cos(a)-dy*Math.sin(a),y:cy+dx*Math.sin(a)+dy*Math.cos(a)};
+};
+const winCenter=w=>({x:S.ew/2+wrap180(w.yaw-S.head.yaw)*S.ppd,y:S.eh/2-(w.pitch-S.head.pitch)*S.ppd});
+const cursorYaw=p=>S.head.yaw+(p.x-S.ew/2)/S.ppd;
+const cursorPitch=p=>S.head.pitch-(p.y-S.eh/2)/S.ppd;
+
+/* ================= construcción de la escena ================= */
+function buildVR(){
+  const vr=$('#vr');vr.innerHTML='';S.eyes=[];
+  for(let side=0;side<2;side++){
+    const e={side,sgn:side===0?1:-1,cur:[],btns:[]};
+    e.root=mk('div','eye '+(side?'r':'l'));
+    e.cam=mk('video','cam');e.cam.muted=true;e.cam.playsInline=true;e.cam.autoplay=true;
+    e.cam.setAttribute('playsinline','');e.cam.setAttribute('webkit-playsinline','');
+    e.world=mk('div','world');e.sky=mk('div','sky dark');e.world.append(e.sky);
+    e.hud=mk('div','hud');
+    e.root.append(e.cam,e.world,e.hud);vr.append(e.root);S.eyes.push(e);
+  }
+  buildHud();applyGeom();
+}
+function applyGeom(){
+  S.eyes.forEach(e=>{
+    e.sky.style.width=(1080*S.ppd)+'px';e.sky.style.height=(4*S.eh)+'px';
+    e.sky.style.backgroundSize=(360*S.ppd)+'px 100%';
+  });
+  buildHud();
+}
+const BTNS=[
+  {t:()=>'▶ YT',act:()=>addWin('yt')},
+  {t:()=>'▶ MP4',act:()=>addWin('mp4')},
+  {t:()=>({cam:'📷',dark:'🌑',sun:'🌅'})[S.bg],act:cycleBg},
+  {t:()=>'−',act:()=>{S.conv=clamp(S.conv-2,-40,40);}},
+  {t:()=>'+',act:()=>{S.conv=clamp(S.conv+2,-40,40);}},
+  {t:()=>'◎',act:recentre},
+  {t:()=>'ⓘ',act:()=>{S.debug=!S.debug;}},
+  {t:()=>S.exitArmed>performance.now()?'¿seguro?':'✕',act:()=>{if(S.exitArmed>performance.now())endSession();else S.exitArmed=performance.now()+3000;}}
+];
+function barRects(){
+  const n=BTNS.length,gap=4,bw=Math.min(54,(S.ew-16-(n-1)*gap)/n),bh=38;
+  const total=n*bw+(n-1)*gap,x0=(S.ew-total)/2,y0=S.eh-bh-10;
+  return BTNS.map((b,i)=>({x:x0+i*(bw+gap),y:y0,w:bw,h:bh}));
+}
+function buildHud(){
+  const rects=barRects();
+  S.eyes.forEach(e=>{
+    e.hud.innerHTML='';e.btns=[];e.cur=[];
+    rects.forEach((r,i)=>{const b=mk('div','hb');b.style.cssText=`left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px`;b.textContent=BTNS[i].t();e.hud.append(b);e.btns.push(b);});
+    for(let i=0;i<2;i++){const c=mk('div','cur');e.hud.append(c);e.cur.push(c);}
+    e.dbg=mk('div','dbg');e.hud.append(e.dbg);
+    e.msgEl=mk('div','msg');e.hud.append(e.msgEl);
+  });
+}
+function hudHit(p){
+  const rs=barRects(),s=6;
+  for(let i=0;i<rs.length;i++){const r=rs[i];if(p.x>=r.x-s&&p.x<=r.x+r.w+s&&p.y>=r.y-s&&p.y<=r.y+r.h+s)return i;}
+  return -1;
+}
+function setMsg(t,ms=4000){S.msg=t;S.msgT=performance.now()+ms;}
+
+/* ================= fondo ================= */
+function cycleBg(){
+  const order=S.stream?['cam','sun','dark']:['sun','dark'];
+  S.bg=order[(order.indexOf(S.bg)+1)%order.length];applyBg();
+}
+function applyBg(){
+  S.eyes.forEach((e,i)=>{
+    // el ojo izquierdo sigue decodificando siempre (de ahí salen las manos)
+    e.cam.style.opacity=S.bg==='cam'?1:0;
+    e.sky.className='sky '+(S.bg==='sun'?'sun':'dark');
+    e.sky.style.display=S.bg==='cam'?'none':'block';
+  });
+  if(S.stream){const r=S.eyes[1].cam;if(S.bg==='cam')r.play().catch(()=>{});else r.pause();}
+}
+
+/* ================= ventanas ================= */
+function addWin(type){
+  if(type==='yt'&&!S.opts.ytId){setMsg('Pon un enlace de YouTube en el inicio');return;}
+  const n=S.wins.length;
+  const w={id:S.nextId++,type,yaw:wrap180(S.head.yaw+n*3),pitch:S.head.pitch+n*-2,s:.32,els:[],drift:0,seeks:0,ready:false,closed:false};
+  for(let side=0;side<2;side++){
+    const el=mk('div','win');el.style.width=WL+'px';el.style.height=HL+'px';
+    el.innerHTML=`<div class="tb"><span class="tt">${type==='yt'?'YouTube (2 iframes)':'MP4 (1 decodificación)'}</span><span class="bt">⏯</span><span class="bx">✕</span></div><div class="body"></div><div class="rz"></div>`;
+    S.eyes[side].world.append(el);w.els.push(el);
+  }
+  S.wins.push(w);reorder();
+  if(type==='yt')createYT(w);else createMP4(w);
+}
+function reorder(){S.wins.forEach((w,i)=>w.els.forEach(el=>el.style.zIndex=i+1));}
+function raise(w){const i=S.wins.indexOf(w);if(i>=0&&i<S.wins.length-1){S.wins.splice(i,1);S.wins.push(w);reorder();}}
+function closeWin(w){
+  w.closed=true;
+  try{w.p&&w.p.forEach(p=>p.destroy());}catch(_){}
+  if(w.video){try{w.video.pause();}catch(_){}w.video.remove();}
+  w.els.forEach(el=>el.remove());
+  S.wins=S.wins.filter(x=>x!==w);
+}
+function togglePlay(w){
+  try{
+    if(w.type==='yt'&&w.ready){const st=w.p[0].getPlayerState();if(st===1)w.p.forEach(p=>p.pauseVideo());else w.p.forEach(p=>p.playVideo());}
+    else if(w.type==='mp4'&&w.video){if(w.video.paused)w.video.play();else w.video.pause();}
+  }catch(_){}
+}
+/* --- YouTube: un reproductor por ojo, el izquierdo manda --- */
+function loadYT(cb){
+  if(window.YT&&YT.Player){cb();return;}
+  (S.ytQ=S.ytQ||[]).push(cb);
+  if(S.ytLoading)return;S.ytLoading=true;
+  window.onYouTubeIframeAPIReady=()=>{const q=S.ytQ;S.ytQ=[];q.forEach(f=>f());};
+  const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';
+  s.onerror=()=>setMsg('No cargó la API de YouTube',8000);document.head.append(s);
+  setTimeout(()=>{if(!(window.YT&&YT.Player))setMsg('YouTube tarda en cargar…',6000);},9000);
+}
+function createYT(w){
+  loadYT(()=>{
+    if(w.closed)return;
+    const id=S.opts.ytId;
+    const make=side=>{
+      const host=mk('div');w.els[side].querySelector('.body').append(host);
+      const vars={autoplay:1,mute:1,playsinline:1,controls:0,rel:0,modestbranding:1,disablekb:1,fs:0,iv_load_policy:3,loop:1,playlist:id,enablejsapi:1};
+      if(location.origin&&location.origin!=='null')vars.origin=location.origin;
+      return new YT.Player(host,{width:BW,height:BH,videoId:id,playerVars:vars,events:{
+        onReady:ev=>{w['r'+side]=true;if(side===0){try{ev.target.unMute();}catch(_){}}try{ev.target.playVideo();}catch(_){}w.ready=!!(w.r0&&w.r1);},
+        onError:ev=>setMsg('YouTube error '+ev.data+' (¿no permite incrustar?)',8000)
+      }});
+    };
+    w.p=[make(0),make(1)];
+  });
+}
+function syncTick(){
+  const now=performance.now();
+  S.wins.forEach(w=>{
+    if(w.type!=='yt'||!w.ready||w.closed)return;
+    try{
+      const tL=w.p[0].getCurrentTime(),tR=w.p[1].getCurrentTime();
+      const sL=w.p[0].getPlayerState(),sR=w.p[1].getPlayerState();
+      w.drift=(tR-tL)*1000;
+      if(sL===1&&S.opts.autosync){
+        if(sR!==1&&sR!==3)w.p[1].playVideo();
+        if(Math.abs(w.drift)>150&&now-(w.lastSeek||0)>2500){w.p[1].seekTo(tL+.12,true);w.lastSeek=now;w.seeks++;}
+      }else if(sL===2&&sR===1)w.p[1].pauseVideo();
+    }catch(_){}
+  });
+}
+/* --- MP4: se decodifica una vez y se dibuja en dos canvas --- */
+function createMP4(w){
+  let v=null;
+  if(S.primed&&!S.primedUsed){v=S.primed;S.primedUsed=true;}
+  else{v=document.createElement('video');v.src=MP4_URL;v.muted=true;}
+  v.loop=true;v.playsInline=true;v.setAttribute('playsinline','');v.preload='auto';
+  v.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none;z-index:-1';
+  document.body.append(v);w.video=v;
+  const cs=[0,1].map(side=>{const c=mk('canvas');c.width=800;c.height=450;w.els[side].querySelector('.body').append(c);return c.getContext('2d');});
+  const pump=()=>{
+    if(w.closed)return;
+    try{cs[0].drawImage(v,0,0,800,450);cs[1].drawImage(v,0,0,800,450);}catch(_){}
+    if(v.requestVideoFrameCallback)v.requestVideoFrameCallback(pump);else requestAnimationFrame(pump);
+  };
+  v.play().catch(()=>{v.muted=true;v.play().catch(()=>{});});
+  pump();w.ready=true;
+}
+
+/* ================= manos y pellizco ================= */
+async function initHands(){
+  try{
+    S.msgHands='Cargando manos…';
+    const mod=await import(MP_BASE+'/vision_bundle.mjs');
+    const fs=await mod.FilesetResolver.forVisionTasks(MP_BASE+'/wasm');
+    const build=delegate=>mod.HandLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:MODEL_URL,delegate},runningMode:'VIDEO',numHands:2,minHandDetectionConfidence:.5,minHandPresenceConfidence:.5,minTrackingConfidence:.5});
+    S.mod=mod;S.fs=fs;S.build=build;
+    if(S.opts.cpu){S.lm=await build('CPU');S.delegate='CPU';}
+    else{try{S.lm=await build('GPU');S.delegate='GPU';}catch(e){console.warn('GPU falló',e);S.lm=await build('CPU');S.delegate='CPU';}}
+    S.msgHands='';
+  }catch(e){S.msgHands='Manos: '+(e&&e.message||e);console.error(e);setMsg(S.msgHands,9000);}
+}
+async function swapCPU(){
+  try{S.delegate='CPU…';S.lm=null;S.lm=await S.build('CPU');S.delegate='CPU';S.detErr=0;}catch(e){S.msgHands='Manos CPU: '+(e&&e.message||e);}
+}
+function maybeDetect(now){
+  const v=S.eyes[0]&&S.eyes[0].cam;
+  if(!S.lm||!S.stream||!v||v.readyState<2||!v.videoWidth)return;
+  if(now-S.lastDet<S.detInterval||v.currentTime===S.lastVT)return;
+  S.lastVT=v.currentTime;S.lastDet=now;
+  const t0=performance.now();let res;
+  try{res=S.lm.detectForVideo(v,t0);S.detErr=0;}
+  catch(e){if(++S.detErr>3&&S.delegate==='GPU'){setMsg('GPU falló, paso a CPU');swapCPU();}return;}
+  const dt=performance.now()-t0;S.detMs=S.detMs?S.detMs*.8+dt*.2:dt;S.detCount++;
+  processHands(res,v,now);
+}
+function processHands(res,v,now){
+  const vw=v.videoWidth,vh=v.videoHeight;
+  const sc=Math.max(S.ew/vw,S.eh/vh),ox=(S.ew-vw*sc)/2,oy=(S.eh-vh*sc)/2;   // mismo recorte que object-fit:cover
+  const hs=res.handedness||res.handednesses||[];
+  const used=[false,false];
+  (res.landmarks||[]).forEach((lm,i)=>{
+    const lab=hs[i]&&hs[i][0]&&hs[i][0].categoryName;
+    let slot=lab==='Left'?0:1;if(used[slot])slot=1-slot;used[slot]=true;
+    const th=lm[4],ix=lm[8],wr=lm[0],mc=lm[9];
+    const dd=(a,b)=>Math.hypot((a.x-b.x)*vw,(a.y-b.y)*vh);
+    const ratio=dd(th,ix)/(dd(wr,mc)||1);
+    handUpdate(slot,((th.x+ix.x)/2)*vw*sc+ox,((th.y+ix.y)/2)*vh*sc+oy,ratio,now);
+  });
+}
+function handUpdate(i,px,py,ratio,now){
+  const h=S.hands[i],fresh=now-h.seen>300||!h.vis;
+  h.x=fresh?px:h.x+(px-h.x)*.55;h.y=fresh?py:h.y+(py-h.y)*.55;
+  h.seen=now;h.ratio=ratio;h.vis=true;
+  const was=h.pinch;
+  if(!was&&ratio<S.pinchOn)h.pinch=true;else if(was&&ratio>S.pinchOff)h.pinch=false;
+  if(h.pinch&&!was)pinchStart(h);
+  if(!h.pinch&&was)pinchEnd(h);
+}
+function pinchStart(h){
+  const p={x:h.x,y:h.y};
+  const bi=hudHit(p);
+  if(bi>=0){BTNS[bi].act();S.flash=bi;S.flashT=performance.now();h.grab={type:'ui'};return;}
+  const hit=winHit(p);if(!hit){h.grab=null;return;}
+  const w=hit.win;raise(w);
+  if(hit.part==='close'){closeWin(w);h.grab={type:'ui'};return;}
+  if(hit.part==='play'){togglePlay(w);h.grab={type:'ui'};return;}
+  const other=S.hands.find(o=>o!==h&&o.grab&&o.grab.type==='move'&&o.grab.win===w);
+  if(other&&hit.part!=='resize'){
+    S.zoom={win:w,hs:[h,other],d0:Math.hypot(h.x-other.x,h.y-other.y)||1,s0:w.s};
+    h.grab={type:'zoom',win:w};other.grab={type:'zoom',win:w};return;
+  }
+  const pw=worldToScreen(p.x,p.y);
+  if(hit.part==='resize'){h.grab={type:'resize',win:w,d0:Math.hypot(pw.x-hit.c.x,pw.y-hit.c.y)||1,s0:w.s};return;}
+  h.grab={type:'move',win:w,offYaw:wrap180(w.yaw-cursorYaw(pw)),offPitch:w.pitch-cursorPitch(pw)};
+}
+function pinchEnd(h){
+  const g=h.grab;h.grab=null;
+  if(g&&g.type==='zoom'&&S.zoom){S.zoom.hs.forEach(o=>{o.grab=null;});S.zoom=null;}
+}
+function handsFrame(now){
+  S.hands.forEach(h=>{
+    if(h.vis&&!h.mouse&&now-h.seen>350){h.vis=false;if(h.pinch){h.pinch=false;pinchEnd(h);}}
+    const g=h.grab;if(!g||!h.vis)return;
+    const pw=worldToScreen(h.x,h.y);
+    if(g.type==='move'){g.win.yaw=wrap180(cursorYaw(pw)+g.offYaw);g.win.pitch=clamp(cursorPitch(pw)+g.offPitch,-80,80);}
+    else if(g.type==='resize'){const c=winCenter(g.win);g.win.s=clamp(g.s0*Math.hypot(pw.x-c.x,pw.y-c.y)/g.d0,.12,.9);}
+  });
+  const z=S.zoom;
+  if(z){
+    const [a,b]=z.hs;
+    if(!a.pinch||!b.pinch||!a.vis||!b.vis){z.hs.forEach(o=>{o.grab=null;});S.zoom=null;}
+    else z.win.s=clamp(z.s0*(Math.hypot(a.x-b.x,a.y-b.y)/z.d0),.12,.9);
+  }
+}
+function winHit(p){
+  const pw=worldToScreen(p.x,p.y);
+  for(let i=S.wins.length-1;i>=0;i--){
+    const w=S.wins[i],c=winCenter(w);
+    const lx=(pw.x-c.x)/w.s+WL/2,ly=(pw.y-c.y)/w.s+HL/2,sl=8/w.s;
+    if(lx<-sl||lx>WL+sl||ly<-sl||ly>HL+sl)continue;
+    let part='body';
+    if(ly<TB)part=lx>WL-110?'close':(lx>WL-220?'play':'title');
+    else if(lx>WL-90&&ly>HL-90)part='resize';
+    return {win:w,part,c};
+  }
+  return null;
+}
+
+/* ================= bucle de dibujo ================= */
+let lastTs=0,lastHud=0;
+function tick(ts){
+  if(!S.running)return;
+  requestAnimationFrame(tick);
+  const dt=Math.min(.1,(ts-lastTs)/1000||.016);lastTs=ts;S.frames++;
+  updateHead(dt);
+  maybeDetect(ts);
+  handsFrame(ts);
+  const cx=S.ew/2,cy=S.eh/2,hd=S.head;
+  S.eyes.forEach(e=>{
+    e.world.style.transform=`rotate(${(-hd.roll).toFixed(2)}deg)`;
+    if(S.bg!=='cam')e.sky.style.transform=`translate3d(${(cx-(hd.yaw+360)*S.ppd).toFixed(1)}px,${(cy-2*S.eh+hd.pitch*S.ppd).toFixed(1)}px,0)`;
+  });
+  S.wins.forEach(w=>{
+    const c=winCenter(w);
+    for(let side=0;side<2;side++){
+      const dx=S.eyes[side].sgn*S.conv/2;
+      w.els[side].style.transform=`translate3d(${(c.x+dx).toFixed(1)}px,${c.y.toFixed(1)}px,0) scale(${w.s.toFixed(4)}) translate(-50%,-50%)`;
+    }
+  });
+  S.eyes.forEach(e=>{
+    const dx=e.sgn*S.conv/2;
+    S.hands.forEach((h,i)=>{
+      const c=e.cur[i];
+      if(h.vis){c.style.display='block';c.style.transform=`translate3d(${(h.x+dx).toFixed(1)}px,${h.y.toFixed(1)}px,0)`;c.className='cur'+(h.pinch?' p':'');}
+      else c.style.display='none';
+    });
+  });
+  if(ts-lastHud>200){lastHud=ts;hudRefresh(ts);}
+}
+function hudRefresh(ts){
+  const hot=new Set();
+  S.hands.forEach(h=>{if(h.vis){const b=hudHit(h);if(b>=0)hot.add(b);}});
+  S.eyes.forEach(e=>{
+    e.btns.forEach((b,i)=>{
+      const t=BTNS[i].t();if(b.textContent!==t)b.textContent=t;
+      b.className='hb'+(S.flash===i&&ts-S.flashT<350?' hit':(hot.has(i)?' hot':''));
+    });
+    e.dbg.className='dbg'+(S.debug?'':' off');
+    e.msgEl.textContent=ts<S.msgT?S.msg:(S.msgHands||'');
+  });
+  if(S.debug){
+    const yt=S.wins.find(w=>w.type==='yt'&&w.ready);
+    const nh=S.hands.filter(h=>h.vis).length;
+    const rs=S.hands.map(h=>h.vis?h.ratio.toFixed(2):'—').join(' ');
+    const l1=`fps ${S.fps} · manos ${S.delegate} ${S.detMs?S.detMs.toFixed(0)+'ms':'—'} ${S.detFps||0}/s · ${nh}✋ pellizco ${rs} (<${S.pinchOn})`;
+    const l2=`yaw ${S.head.yaw.toFixed(0)} pit ${S.head.pitch.toFixed(0)} roll ${S.head.roll.toFixed(0)} · sep ${S.conv} · ${mmss((ts-S.t0)/1000)}`;
+    const l3=yt?`YT Δ ${yt.drift>=0?'+':''}${yt.drift.toFixed(0)}ms saltos ${yt.seeks}`:(S.sim.on?'sim: flechas = cabeza':'');
+    S.eyes.forEach(e=>{e.dbg.textContent=l1+'\n'+l2+'\n'+l3;});
+  }
+}
+function statsTick(){
+  if(!S.running)return;
+  S.fps=S.frames;S.frames=0;S.detFps=S.detCount;S.detCount=0;
+  const drift=Math.max(0,...S.wins.filter(w=>w.type==='yt'&&w.ready).map(w=>Math.abs(w.drift)));
+  const seeks=S.wins.reduce((a,w)=>a+(w.seeks||0),0);
+  S.log.push({t:(performance.now()-S.t0)/1000,fps:S.fps,det:S.detFps,detMs:S.detMs,drift,seeks,wins:S.wins.length});
+}
+
+/* ================= entrada de escritorio (ratón + teclado) ================= */
+function bindDesktop(){
+  const vr=$('#vr');
+  const pos=e=>({x:(e.clientX>=innerWidth/2?e.clientX-innerWidth/2:e.clientX),y:e.clientY});
+  vr.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;const h=S.hands[0];h.mouse=true;const p=pos(e);handUpdate(0,p.x,p.y,h.pinch?.1:1,performance.now());});
+  vr.addEventListener('pointerdown',e=>{const h=S.hands[0];h.mouse=true;const p=pos(e);h.x=p.x;h.y=p.y;h.vis=true;handUpdate(0,p.x,p.y,.1,performance.now());});
+  addEventListener('pointerup',e=>{const h=S.hands[0];if(h.mouse)handUpdate(0,h.x,h.y,1,performance.now());});
+  addEventListener('keydown',e=>{S.sim.keys[e.key]=true;});
+  addEventListener('keyup',e=>{S.sim.keys[e.key]=false;});
+  vr.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+}
+
+/* ================= sesión ================= */
+function ytIdOf(s){
+  s=(s||'').trim();if(/^[\w-]{11}$/.test(s))return s;
+  const m=s.match(/(?:v=|youtu\.be\/|embed\/|shorts\/|live\/)([\w-]{11})/);return m?m[1]:'';
+}
+const err=t=>{$('#err').textContent=t;};
+
+async function begin(){
+  err('');
+  const opts={ytId:ytIdOf($('#yt').value),useCam:$('#usecam').checked,bg:$('#bg').value,autosync:$('#autosync').checked,cpu:$('#cpu').checked||QS.get('cpu')==='1'};
+  S.opts=opts;
+  // Todo lo que exige gesto del usuario se pide AQUÍ, de forma síncrona, antes de cualquier await.
+  const oriP=(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function')?DeviceOrientationEvent.requestPermission():Promise.resolve('granted');
+  try{ // desbloquea audio para el MP4 (más tarde el pellizco ya no cuenta como gesto)
+    const v=document.createElement('video');v.src=MP4_URL;v.playsInline=true;v.setAttribute('playsinline','');v.loop=true;v.preload='auto';
+    v.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none';document.body.append(v);
+    S.primed=v;const pp=v.play();if(pp&&pp.then)pp.then(()=>{v.pause();v.currentTime=0;}).catch(()=>{});
+  }catch(_){}
+  const camP=opts.useCam?(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia?navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}}}):Promise.reject(new Error('Sin cámara: abre la página por HTTPS'))):Promise.resolve(null);
+  let ori='granted';try{ori=await oriP;}catch(e){ori='error';}
+  try{S.stream=await camP;}catch(e){S.stream=null;err('Cámara no disponible: '+(e&&e.message||e)+'\nSigo sin cámara (solo fondo 3D, sin manos).');}
+  if(ori==='granted')addEventListener('deviceorientation',onOri,true);
+  else err($('#err').textContent+'\nMovimiento no autorizado: usa las flechas del teclado para simular la cabeza.');
+  S.bg=(opts.bg==='cam'&&!S.stream)?'sun':opts.bg;
+  // cuenta regresiva para ponerse el visor
+  $('#start').style.display='none';
+  const c=$('#count');c.style.display='flex';
+  let n=S.stream?8:5;$('#cn').textContent=n;
+  const iv=setInterval(()=>{n--;$('#cn').textContent=n;if(n<=0){clearInterval(iv);c.style.display='none';startVR();}},1000);
+}
+function startVR(){
+  geom();document.body.classList.add('running');
+  $('#vr').style.display='block';
+  buildVR();bindDesktop();
+  S.running=true;S.t0=performance.now();lastTs=S.t0;S.needCenter=true;
+  if(S.stream){S.eyes.forEach(e=>{e.cam.srcObject=S.stream;e.cam.play().catch(()=>{});});}
+  applyBg();
+  setTimeout(()=>{if(!S.oriOK){S.sim.on=true;setMsg('Sin sensor de movimiento: flechas del teclado = cabeza',8000);}},1500);
+  addWin(S.opts.ytId?'yt':'mp4');
+  S.timers.push(setInterval(statsTick,1000),setInterval(syncTick,300));
+  requestAnimationFrame(tick);
+  if(S.stream)initHands();else S.msgHands='Sin cámara: manos desactivadas (ratón sí)';
+}
+function endSession(){
+  S.running=false;S.timers.forEach(clearInterval);
+  S.wins.slice().forEach(closeWin);
+  if(S.stream)S.stream.getTracks().forEach(t=>t.stop());
+  if(S.primed)S.primed.remove();
+  removeEventListener('deviceorientation',onOri,true);
+  $('#vr').style.display='none';document.body.classList.remove('running');
+  showResults();
+}
+function showResults(){
+  const L=S.log,dur=L.length?L[L.length-1].t:0;
+  const rows=[];
+  for(let m=0;m*60<dur;m++){
+    const g=L.filter(x=>Math.floor(x.t/60)===m);if(!g.length)continue;
+    const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+    rows.push(`${pad(m)}:00  fps ${avg(g.map(x=>x.fps)).toFixed(0).padStart(2)} (mín ${Math.min(...g.map(x=>x.fps))})  manos ${avg(g.map(x=>x.det)).toFixed(0).padStart(2)}/s ${avg(g.map(x=>x.detMs||0)).toFixed(0)}ms  Δyt máx ${Math.max(...g.map(x=>x.drift)).toFixed(0)}ms  saltos ${g[g.length-1].seeks}`);
+  }
+  const txt=[
+    `Duración: ${mmss(dur)}`,
+    `Manos: ${S.delegate} · cámara ${S.stream?'sí':'no'} · auto-sync ${S.opts.autosync?'sí':'no'} · sensor ${S.oriOK?'sí':'simulado'}`,
+    `Navegador: ${navigator.userAgent}`,
+    '',
+    'minuto  fps medio / mínimo · detección manos · deriva YouTube',
+    ...(rows.length?rows:['(sin datos)'])
+  ].join('\n');
+  $('#resTxt').textContent=txt;$('#results').style.display='block';
+}
+
+/* ================= arranque ================= */
+$('#go').addEventListener('click',begin);
+$('#copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('#resTxt').textContent);$('#copy').textContent='Copiado ✓';}catch(_){$('#copy').textContent='Selecciona el texto y copia';}});
+$('#again').addEventListener('click',()=>location.reload());
+addEventListener('resize',()=>{geom();if(S.running)applyGeom();});
+addEventListener('orientationchange',()=>setTimeout(()=>{geom();if(S.running)applyGeom();},300));
+geom();
+window.__S=S;window.__addWin=addWin;window.__handUpdate=handUpdate;   // ganchos solo para pruebas
+})();
+</script>
+</body>
+</html>
