@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#000000">
-<title>VR Box · prueba descartable</title>
+<title>VR Box · prueba v2</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:#000;color:#e8ecf4;font:15px/1.45 -apple-system,system-ui,"Segoe UI",sans-serif;overflow:hidden;overscroll-behavior:none}
@@ -22,13 +22,15 @@ button,input,select{font:inherit;color:inherit}
 .card input[type=text],.card select{width:100%;padding:11px 12px;border-radius:10px;border:1px solid #2b3550;background:#0d111b}
 .card .row{display:flex;align-items:center;gap:10px;margin-top:10px;color:#cfd6e6}
 .card .row input{width:20px;height:20px}
+.card .row label{margin:0;color:inherit;font-size:15px}
 .big{width:100%;padding:15px;margin-top:14px;border:0;border-radius:14px;background:#4f7cff;color:#fff;font-weight:700;font-size:17px}
 .big.alt{background:#232b3d}
 .small{font-size:12.5px;color:#8591a8;margin-top:12px}
 #err{color:#ff8b8b;margin-top:10px;white-space:pre-wrap}
-#count{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;background:#000;z-index:50;text-align:center;padding:20px}
-#count b{font-size:84px;line-height:1}
-#count span{color:#9aa4b8;margin-top:10px;max-width:520px}
+#arm{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;background:rgba(0,0,0,.94);z-index:50;text-align:center;padding:20px}
+#arm b{font-size:30px;line-height:1.2}
+#arm span{color:#aab4c8;margin-top:12px;max-width:560px}
+#arm i{font-style:normal;font-size:90px;line-height:1;font-weight:800;margin-top:6px}
 #rotate{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#000;z-index:60;font-size:20px;text-align:center;padding:30px}
 body.portrait.running #rotate{display:flex}
 
@@ -52,25 +54,61 @@ body.portrait.running #rotate{display:flex}
  radial-gradient(ellipse 120px 20px at 80% 44%,rgba(255,255,255,.22),transparent),
  radial-gradient(ellipse 150px 22px at 8% 39%,rgba(255,255,255,.2),transparent),
  linear-gradient(#18235e 0%,#7a3f8f 40%,#f07a5a 48%,#ffb26b 49.8%,#2a4f7a 50.2%,#0b2b4f 56%,#06182e 100%)}
+.sky.beach{background-image:
+ radial-gradient(circle at 30% 43%,#fff 0 14px,rgba(255,250,210,.9) 30px,rgba(255,240,180,.35) 140px,transparent 260px),
+ radial-gradient(ellipse 200px 26px at 65% 40%,rgba(255,255,255,.75),transparent),
+ radial-gradient(ellipse 150px 20px at 12% 37%,rgba(255,255,255,.65),transparent),
+ radial-gradient(ellipse 130px 18px at 88% 42%,rgba(255,255,255,.6),transparent),
+ linear-gradient(#3b9bff 0%,#8ed1ff 40%,#d8f1ff 49.7%,#40c4d0 50.2%,#1a9bb0 56%,#e8d9a8 60%,#d4bf86 100%)}
+.sky.space{background-image:
+ radial-gradient(circle at 9% 41%,#fff 0 1px,transparent 2px),
+ radial-gradient(circle at 22% 46%,rgba(255,255,255,.7) 0 1px,transparent 2px),
+ radial-gradient(circle at 35% 39%,#fff 0 1px,transparent 2px),
+ radial-gradient(circle at 48% 44%,rgba(255,255,255,.8) 0 1px,transparent 2px),
+ radial-gradient(circle at 63% 38.5%,#fff 0 1px,transparent 2px),
+ radial-gradient(circle at 77% 47%,rgba(255,255,255,.7) 0 1px,transparent 2px),
+ radial-gradient(circle at 91% 42%,#fff 0 1px,transparent 2px),
+ radial-gradient(ellipse 520px 230px at 30% 47%,rgba(130,60,210,.55),transparent),
+ radial-gradient(ellipse 440px 210px at 75% 43%,rgba(40,130,230,.45),transparent),
+ linear-gradient(#05020f 0%,#0b0724 50%,#05020f 100%)}
 
+/* ----- ventanas (tamaño de layout 960 de ancho; se escalan con transform) ----- */
 .win{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;pointer-events:none;background:#0a0c12;box-shadow:0 0 0 3px rgba(255,255,255,.22),0 30px 80px rgba(0,0,0,.6)}
-.win .tb{position:absolute;left:0;top:0;width:960px;height:80px;display:flex;align-items:center;background:#1a2132;color:#e8ecf4;font-size:36px;font-weight:600;padding-left:26px}
+.win.hov{box-shadow:0 0 0 7px #4f7cff,0 30px 80px rgba(0,0,0,.6)}
+.win .tb{position:absolute;left:0;top:0;width:960px;height:80px;display:flex;align-items:center;background:#1a2132;color:#e8ecf4;font-size:34px;font-weight:600;padding-left:26px}
+.win.hov .tb{background:#27407e}
 .win .tt{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.win .bt,.win .bx{width:110px;height:80px;display:flex;align-items:center;justify-content:center;font-size:42px}
-.win .bx{background:#7a2a38}.win .bt{background:#2a3a5e}
+.win .bx{width:130px;height:80px;display:flex;align-items:center;justify-content:center;font-size:44px;background:#7a2a38}
 .win .body{position:absolute;left:0;top:80px;width:960px;height:540px;background:#000}
 .win .body iframe,.win .body canvas{position:absolute;left:0;top:0;width:960px;height:540px;border:0;display:block}
-.win .rz{position:absolute;right:0;bottom:0;width:90px;height:90px;background:linear-gradient(135deg,transparent 50%,rgba(255,255,255,.8) 50%)}
+.win .cb{position:absolute;left:0;top:620px;width:960px;height:100px;display:flex;background:#141a29}
+.win .cbtn{flex:1;display:flex;align-items:center;justify-content:center;font-size:44px;border-left:3px solid #0a0c12;color:#e8ecf4;white-space:nowrap}
+.win .cbtn:first-child{border-left:0}
+.win .hot{background:#4f7cff!important;color:#fff}
+.win .sl{position:absolute;left:1000px;top:80px;width:100px;height:540px}
+.win .sl .trk{position:absolute;left:38px;top:0;width:24px;height:540px;border-radius:12px;background:rgba(255,255,255,.28)}
+.win .sl .kn{position:absolute;left:12px;top:232px;width:76px;height:76px;border-radius:50%;background:#fff;box-shadow:0 0 0 5px #4f7cff}
+.win .sl.hot .kn{background:#9db8ff}
+.win .sl .sp,.win .sl .sm{position:absolute;left:0;width:100px;text-align:center;font-size:64px;font-weight:700;color:#fff;line-height:1}
+.win .sl .sp{top:-78px}.win .sl .sm{bottom:-78px}
+.win .sl.hot{background:rgba(79,124,255,.25);border-radius:30px}
 
+/* ----- HUD fijo a la cabeza ----- */
 .hud{position:absolute;inset:0;pointer-events:none;font-family:ui-monospace,Menlo,monospace}
-.hb{position:absolute;display:flex;align-items:center;justify-content:center;font:600 13px -apple-system,system-ui,sans-serif;color:#fff;border-radius:12px;background:rgba(18,22,32,.78);border:1px solid rgba(255,255,255,.2)}
-.hb.hot{background:rgba(79,124,255,.85);border-color:#fff}
+.panel{position:absolute;background:rgba(10,13,22,.93);border:1px solid rgba(255,255,255,.22);border-radius:16px}
+.hd{position:absolute;font:700 10px -apple-system,system-ui,sans-serif;letter-spacing:.08em;color:#8ea0c4}
+.hb{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.1;font:600 12.5px -apple-system,system-ui,sans-serif;color:#fff;border-radius:11px;background:rgba(32,40,62,.95);border:1px solid rgba(255,255,255,.2);padding:0 3px}
+.hb.big{font-size:16px;background:rgba(32,40,62,.92)}
+.hb.red{background:rgba(122,42,56,.95)}
+.hb.hot{background:rgba(79,124,255,.95);border-color:#fff}
 .hb.hit{background:#fff;color:#111}
-.cur{position:absolute;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.55);display:none;will-change:transform}
-.cur.p{background:rgba(79,124,255,.9);border-color:#fff;width:22px;height:22px;margin:-11px 0 0 -11px}
-.dbg{position:absolute;left:0;right:0;top:6px;text-align:center;font-size:10px;line-height:1.35;color:#9dffb0;text-shadow:0 0 3px #000,0 0 3px #000;white-space:pre}
+.cur{position:absolute;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.6);display:none;will-change:transform}
+.cur.p{background:rgba(79,124,255,.95);border-color:#fff}
+.dbg{position:absolute;left:0;right:0;top:5px;text-align:center;font-size:10px;line-height:1.35;color:#9dffb0;text-shadow:0 0 3px #000,0 0 3px #000;white-space:pre}
 .dbg.off{display:none}
-.msg{position:absolute;left:8px;right:8px;top:52px;text-align:center;font:600 12px -apple-system,system-ui,sans-serif;color:#ffd479;text-shadow:0 0 4px #000}
+.msg,.hint{position:absolute;left:8px;right:8px;text-align:center;text-shadow:0 0 4px #000,0 0 4px #000}
+.msg{bottom:70px;font:700 12.5px -apple-system,system-ui,sans-serif;color:#ffd479}
+.hint{bottom:68px;font:600 11.5px/1.35 -apple-system,system-ui,sans-serif;color:#fff;background:rgba(10,13,22,.72);border-radius:10px;padding:6px 8px;left:14px;right:14px}
 
 #results pre{white-space:pre-wrap;background:#0d111b;border:1px solid #232b3d;border-radius:10px;padding:12px;font-size:12px;overflow:auto;user-select:text;-webkit-user-select:text}
 </style>
@@ -78,29 +116,32 @@ body.portrait.running #rotate{display:flex}
 <body>
 
 <div id="start" class="screen">
-  <h1>Prueba VR · iPhone en VR Box</h1>
-  <p class="sub">Prueba descartable. Mide tres cosas: video sincronizado entre ojos, gestos con las manos y cuánto se calienta el teléfono.</p>
+  <h1>Prueba VR · v2</h1>
+  <p class="sub">Prueba descartable. Ahora con menú, controles de video, barra de tamaño y pellizco estricto.</p>
   <ol>
-    <li>Gira el teléfono a <b>horizontal</b> y apaga el bloqueo de rotación.</li>
-    <li>Pega un video de YouTube y toca <b>Iniciar</b>.</li>
-    <li>Acepta cámara y movimiento. Tienes unos segundos para meterlo en la caja.</li>
-    <li>Pellizca (pulgar + índice) para mover una ventana; pellizca con las dos manos sobre ella para agrandarla o achicarla.</li>
+    <li>Pon el teléfono en <b>horizontal</b> (sin bloqueo de rotación).</li>
+    <li>Pega uno o dos videos de YouTube y toca <b>Iniciar</b>.</li>
+    <li>Acepta cámara y movimiento. Luego toca la pantalla <b>una vez</b> (activa video y sonido) y ponte el visor.</li>
   </ol>
   <div class="card">
-    <label for="yt">Video de YouTube (enlace o ID)</label>
-    <input id="yt" type="text" value="https://www.youtube.com/watch?v=aqz-KE-bpKQ" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <label for="yt1">YouTube 1 (enlace o ID)</label>
+    <input id="yt1" type="text" value="https://www.youtube.com/watch?v=aqz-KE-bpKQ" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <label for="yt2">YouTube 2 (opcional)</label>
+    <input id="yt2" type="text" value="" placeholder="para abrir una segunda ventana de YouTube" autocapitalize="off" autocorrect="off" spellcheck="false">
     <label for="bg">Fondo inicial</label>
-    <select id="bg"><option value="cam">Cámara (ver mi cuarto)</option><option value="sun">Atardecer (3D)</option><option value="dark">Oscuro (3D)</option></select>
-    <div class="row"><input id="usecam" type="checkbox" checked><label for="usecam" style="margin:0;color:inherit;font-size:15px">Usar cámara (manos y fondo)</label></div>
-    <div class="row"><input id="autosync" type="checkbox" checked><label for="autosync" style="margin:0;color:inherit;font-size:15px">Auto-sincronizar YouTube entre ojos</label></div>
-    <div class="row"><input id="cpu" type="checkbox"><label for="cpu" style="margin:0;color:inherit;font-size:15px">Manos en CPU (si la detección falla)</label></div>
+    <select id="bg"><option value="cam">Cámara (ver mi cuarto)</option><option value="sun">Atardecer</option><option value="beach">Playa</option><option value="space">Espacio</option><option value="dark">Noche</option></select>
+    <label for="sens">Pellizco</label>
+    <select id="sens"><option value="0" selected>Estricto: pulgar e índice bien cerrados</option><option value="1">Normal</option><option value="2">Suave: basta acercarlos</option></select>
+    <div class="row"><input id="usecam" type="checkbox" checked><label for="usecam">Usar cámara (manos y fondo)</label></div>
+    <div class="row"><input id="autosync" type="checkbox" checked><label for="autosync">Auto-sincronizar YouTube entre ojos</label></div>
+    <div class="row"><input id="cpu" type="checkbox"><label for="cpu">Manos en CPU (si la detección falla)</label></div>
   </div>
   <button id="go" class="big">Iniciar</button>
   <div id="err"></div>
-  <p class="small">Pantalla completa: Compartir → Añadir a pantalla de inicio, y ábrela desde ahí. Si el video de YouTube sale sin sonido en esta prueba es normal; lo que importa es la imagen.</p>
+  <p class="small">Pantalla completa: Compartir → Añadir a pantalla de inicio, y ábrela desde ahí.</p>
 </div>
 
-<div id="count"><b id="cn">8</b><span>Ponte el visor. Al terminar la cuenta, mira al frente: ahí aparece la ventana.</span></div>
+<div id="arm"><b id="armT">Cargando…</b><span id="armS">Un momento.</span><i id="armN"></i></div>
 <div id="rotate">Gira el teléfono a horizontal</div>
 <div id="vr"></div>
 
@@ -116,13 +157,16 @@ body.portrait.running #rotate{display:flex}
 (()=>{
 'use strict';
 /* ================= constantes ================= */
-const WL=960, TB=80, BW=960, BH=540, HL=BH+TB;       // ventana: tamaño de layout (se escala con CSS)
+const WL=960,TB=80,BW=960,BH=540,CBH=100,HL=TB+BH+CBH;   // ventana en px de layout: barra título / video / controles
+const SMIN=.12,SMAX=.9;
 const QS=new URLSearchParams(location.search);
 const MP4_URL=QS.get('mp4')||'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 const MP_VER='1.2.3';
 const MP_BASE='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+MP_VER;
 const MODEL_URL='https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
 const D=Math.PI/180;
+const SENS=[{n:'Estricto',on:.14,off:.32},{n:'Normal',on:.20,off:.40},{n:'Suave',on:.28,off:.50}];
+const BGS=['cam','sun','beach','space','dark'];
 const $=(s,r=document)=>r.querySelector(s);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const wrap180=a=>{a=(a+180)%360;if(a<0)a+=360;return a-180;};
@@ -131,19 +175,23 @@ const pad=n=>String(n).padStart(2,'0');
 const mmss=s=>pad(Math.floor(s/60))+':'+pad(Math.floor(s%60));
 
 /* ================= estado ================= */
-const newHand=()=>({x:0,y:0,seen:0,pinch:false,ratio:1,grab:null,vis:false,mouse:false});
+const newHand=()=>({x:0,y:0,seen:0,pinch:false,ratio:1,grab:null,vis:false,mouse:false,cnt:0,hist:[]});
 const S={
-  running:false,opts:{},ew:0,eh:0,ppd:5,conv:0,bg:'cam',debug:true,
-  bearing:0,yaw0:0,head:{yaw:0,pitch:0,roll:0},oriSeen:0,sim:{on:false,yaw:0,pitch:0,keys:{}},needCenter:true,
+  running:false,opts:{},ew:0,eh:0,ppd:5,conv:0,bg:'cam',debug:true,menuOpen:false,panel:null,heads:[],
+  bearing:0,yaw0:0,head:{yaw:0,pitch:0,roll:0},oriSeen:0,oriOK:false,sim:{on:false,yaw:0,pitch:0,keys:{}},needCenter:true,
   eyes:[],wins:[],hands:[newHand(),newHand()],zoom:null,
-  stream:null,lm:null,delegate:'—',detErr:0,detMs:0,detCount:0,lastDet:0,lastVT:-1,detInterval:33,
-  pinchOn:parseFloat(new URLSearchParams(location.search).get('on'))||.28,pinchOff:parseFloat(new URLSearchParams(location.search).get('off'))||.45,
-  frames:0,fps:0,log:[],t0:0,nextId:1,primed:null,primedUsed:false,
-  msg:'',msgT:0,flash:-1,flashT:0,exitArmed:0,timers:[]
+  stream:null,lm:null,delegate:'—',detErr:0,detMs:0,detCount:0,detFps:0,lastDet:0,lastVT:-1,detInterval:33,
+  sens:0,pinchOn:.14,pinchOff:.32,pinchCount:0,
+  frames:0,fps:0,log:[],t0:0,nextId:1,primed:null,primedUsed:false,gestureDone:false,
+  msg:'',msgT:0,msgHands:'',flash:-1,flashT:0,exitArmed:0,hintUntil:0,hoverKey:'',timers:[]
 };
+function setSens(i){
+  S.sens=i;const q=SENS[i];
+  S.pinchOn=parseFloat(QS.get('on'))||q.on;S.pinchOff=parseFloat(QS.get('off'))||q.off;
+}
 
 /* ================= orientación de la cabeza ================= */
-// R = Rz(alpha)·Rx(beta)·Ry(gamma). Dirección de la cámara trasera = -Z del teléfono.
+// R = Rz(alpha)·Rx(beta)·Ry(gamma). La cámara trasera mira hacia -Z del teléfono.
 function onOri(e){
   if(e.alpha==null||e.beta==null||e.gamma==null)return;
   S.oriSeen=performance.now();S.oriOK=true;
@@ -153,7 +201,6 @@ function onOri(e){
   const f=[-R[0][2],-R[1][2],-R[2][2]];
   S.bearing=Math.atan2(f[0],f[1])/D;
   S.rawPitch=Math.asin(clamp(f[2],-1,1))/D;
-  // "arriba" de la pantalla (según el lado en que esté girado el teléfono) → para el roll
   const up=[R[2][0],R[2][1],R[2][2]];
   const ui=Math.abs(up[0])>Math.abs(up[1])?[Math.sign(up[0]),0,0]:[0,Math.sign(up[1])||1,0];
   const U=[0,1,2].map(i=>R[i][0]*ui[0]+R[i][1]*ui[1]+R[i][2]*ui[2]);
@@ -169,23 +216,18 @@ function updateHead(dt){
     S.bearing=S.sim.yaw;S.rawPitch=S.sim.pitch;S.rawRoll=0;
   }
   if(S.needCenter&&(S.oriOK||S.sim.on)){S.yaw0=S.bearing;S.needCenter=false;}
-  S.head.yaw=wrap180(S.bearing-S.yaw0);
-  S.head.pitch=S.rawPitch||0;
-  S.head.roll=S.rawRoll||0;
+  S.head.yaw=wrap180(S.bearing-S.yaw0);S.head.pitch=S.rawPitch||0;S.head.roll=S.rawRoll||0;
 }
-function recentre(){S.yaw0=S.bearing;}
+function recentre(){S.yaw0=S.bearing;setMsg('Vista centrada');}
 
 /* ================= geometría ================= */
 function geom(){S.ew=innerWidth/2;S.eh=innerHeight;S.ppd=S.eh/75;document.body.classList.toggle('portrait',innerHeight>innerWidth);}
-const worldToScreen=(x,y)=>{ // inverso de la rotación del mundo: pantalla → mundo
-  const cx=S.ew/2,cy=S.eh/2,a=S.head.roll*D,dx=x-cx,dy=y-cy;
-  return {x:cx+dx*Math.cos(a)-dy*Math.sin(a),y:cy+dx*Math.sin(a)+dy*Math.cos(a)};
-};
+const toWorld=(x,y)=>{const cx=S.ew/2,cy=S.eh/2,a=S.head.roll*D,dx=x-cx,dy=y-cy;return {x:cx+dx*Math.cos(a)-dy*Math.sin(a),y:cy+dx*Math.sin(a)+dy*Math.cos(a)};};
 const winCenter=w=>({x:S.ew/2+wrap180(w.yaw-S.head.yaw)*S.ppd,y:S.eh/2-(w.pitch-S.head.pitch)*S.ppd});
 const cursorYaw=p=>S.head.yaw+(p.x-S.ew/2)/S.ppd;
 const cursorPitch=p=>S.head.pitch-(p.y-S.eh/2)/S.ppd;
 
-/* ================= construcción de la escena ================= */
+/* ================= escena ================= */
 function buildVR(){
   const vr=$('#vr');vr.innerHTML='';S.eyes=[];
   for(let side=0;side<2;side++){
@@ -197,73 +239,103 @@ function buildVR(){
     e.hud=mk('div','hud');
     e.root.append(e.cam,e.world,e.hud);vr.append(e.root);S.eyes.push(e);
   }
-  buildHud();applyGeom();
+  applyGeom();
 }
 function applyGeom(){
-  S.eyes.forEach(e=>{
-    e.sky.style.width=(1080*S.ppd)+'px';e.sky.style.height=(4*S.eh)+'px';
-    e.sky.style.backgroundSize=(360*S.ppd)+'px 100%';
-  });
+  S.eyes.forEach(e=>{e.sky.style.width=(1080*S.ppd)+'px';e.sky.style.height=(4*S.eh)+'px';e.sky.style.backgroundSize=(360*S.ppd)+'px 100%';});
   buildHud();
 }
-const BTNS=[
-  {t:()=>'▶ YT',act:()=>addWin('yt')},
-  {t:()=>'▶ MP4',act:()=>addWin('mp4')},
-  {t:()=>({cam:'📷',dark:'🌑',sun:'🌅'})[S.bg],act:cycleBg},
-  {t:()=>'−',act:()=>{S.conv=clamp(S.conv-2,-40,40);}},
-  {t:()=>'+',act:()=>{S.conv=clamp(S.conv+2,-40,40);}},
-  {t:()=>'◎',act:recentre},
-  {t:()=>'ⓘ',act:()=>{S.debug=!S.debug;}},
-  {t:()=>S.exitArmed>performance.now()?'¿seguro?':'✕',act:()=>{if(S.exitArmed>performance.now())endSession();else S.exitArmed=performance.now()+3000;}}
-];
-function barRects(){
-  const n=BTNS.length,gap=4,bw=Math.min(54,(S.ew-16-(n-1)*gap)/n),bh=38;
-  const total=n*bw+(n-1)*gap,x0=(S.ew-total)/2,y0=S.eh-bh-10;
-  return BTNS.map((b,i)=>({x:x0+i*(bw+gap),y:y0,w:bw,h:bh}));
-}
-function buildHud(){
-  const rects=barRects();
-  S.eyes.forEach(e=>{
-    e.hud.innerHTML='';e.btns=[];e.cur=[];
-    rects.forEach((r,i)=>{const b=mk('div','hb');b.style.cssText=`left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px`;b.textContent=BTNS[i].t();e.hud.append(b);e.btns.push(b);});
-    for(let i=0;i<2;i++){const c=mk('div','cur');e.hud.append(c);e.cur.push(c);}
-    e.dbg=mk('div','dbg');e.hud.append(e.dbg);
-    e.msgEl=mk('div','msg');e.hud.append(e.msgEl);
-  });
-}
-function hudHit(p){
-  const rs=barRects(),s=6;
-  for(let i=0;i<rs.length;i++){const r=rs[i];if(p.x>=r.x-s&&p.x<=r.x+r.w+s&&p.y>=r.y-s&&p.y<=r.y+r.h+s)return i;}
-  return -1;
-}
-function setMsg(t,ms=4000){S.msg=t;S.msgT=performance.now()+ms;}
-
-/* ================= fondo ================= */
-function cycleBg(){
-  const order=S.stream?['cam','sun','dark']:['sun','dark'];
-  S.bg=order[(order.indexOf(S.bg)+1)%order.length];applyBg();
+function setBg(name){
+  if(name==='cam'&&!S.stream){setMsg('Sin cámara: no hay fondo de cámara');return;}
+  S.bg=name;applyBg();
 }
 function applyBg(){
-  S.eyes.forEach((e,i)=>{
-    // el ojo izquierdo sigue decodificando siempre (de ahí salen las manos)
-    e.cam.style.opacity=S.bg==='cam'?1:0;
-    e.sky.className='sky '+(S.bg==='sun'?'sun':'dark');
+  S.eyes.forEach(e=>{
+    e.cam.style.opacity=S.bg==='cam'?1:0;     // el ojo izquierdo sigue decodificando (de ahí salen las manos)
+    e.sky.className='sky '+(S.bg==='cam'?'dark':S.bg);
     e.sky.style.display=S.bg==='cam'?'none':'block';
   });
-  if(S.stream){const r=S.eyes[1].cam;if(S.bg==='cam')r.play().catch(()=>{});else r.pause();}
+  if(S.stream&&S.eyes[1]){const r=S.eyes[1].cam;if(S.bg==='cam')r.play().catch(()=>{});else r.pause();}
 }
 
+/* ================= menú y HUD ================= */
+function closeMenu(){S.menuOpen=false;buildHud();}
+function ensure(fn){return ()=>{fn();};}
+function uiItems(){
+  const ew=S.ew,eh=S.eh,it=[];S.panel=null;S.heads=[];
+  const add=(x,y,w,h,label,act,cls)=>it.push({x,y,w,h,label,act,cls:cls||''});
+  if(!S.menuOpen){
+    const bh=46,y=eh-bh-10;
+    add(ew/2-86,y,120,bh,()=>'☰ Menú',()=>{S.menuOpen=true;buildHud();},'big');
+    add(ew/2+42,y,bh,bh,()=>'◎',recentre,'big');
+    return it;
+  }
+  const pw=Math.min(ew-12,404),px=(ew-pw)/2,pd=8,gap=5,cols=3,bw=(pw-pd*2-gap*(cols-1))/cols,bh=36,hh=15;
+  const total=3*hh+6*(bh+gap)+pd*2;
+  const y0=Math.max(S.debug?48:10,(eh-total)/2);
+  S.panel={x:px,y:y0,w:pw,h:total};
+  let y=y0+pd;
+  const head=t=>{S.heads.push({x:px+pd+2,y:y+1,label:t});y+=hh;};
+  const row=(arr)=>{arr.forEach((a,i)=>add(px+pd+i*(bw+gap),y,bw,bh,a[0],a[1],a[2]));y+=bh+gap;};
+  head('APPS');
+  row([[()=>'▶ YouTube 1',()=>{addWin('yt',S.opts.yt1);}],
+       [()=>S.opts.yt2?'▶ YouTube 2':'YouTube 2 —',()=>{addWin('yt',S.opts.yt2);}],
+       [()=>'▶ Video MP4',()=>{addWin('mp4');}]]);
+  head('FONDO');
+  const bgl={cam:'📷 Cámara',sun:'🌅 Atardecer',dark:'🌙 Noche',beach:'🏖 Playa',space:'🪐 Espacio'};
+  row([[()=>(S.bg==='cam'?'● ':'')+bgl.cam,()=>setBg('cam')],[()=>(S.bg==='sun'?'● ':'')+bgl.sun,()=>setBg('sun')],[()=>(S.bg==='dark'?'● ':'')+bgl.dark,()=>setBg('dark')]]);
+  row([[()=>(S.bg==='beach'?'● ':'')+bgl.beach,()=>setBg('beach')],[()=>(S.bg==='space'?'● ':'')+bgl.space,()=>setBg('space')]]);
+  head('AJUSTES');
+  row([[()=>'◎ Centrar vista',()=>{recentre();}],
+       [()=>'✋ Pellizco: '+SENS[S.sens].n,()=>{setSens((S.sens+1)%3);setMsg('Pellizco: '+SENS[S.sens].n);}],
+       [()=>'ⓘ Info '+(S.debug?'ON':'OFF'),()=>{S.debug=!S.debug;buildHud();}]]);
+  row([[()=>'👁 Ojos −',()=>{S.conv=clamp(S.conv-2,-40,40);setMsg('Separación '+S.conv);}],
+       [()=>'👁 Ojos +',()=>{S.conv=clamp(S.conv+2,-40,40);setMsg('Separación '+S.conv);}],
+       [()=>'❔ Ayuda',()=>{S.hintUntil=performance.now()+25000;closeMenu();}]]);
+  row([[()=>'↩ Cerrar',()=>closeMenu(),'big'],
+       [()=>S.exitArmed>performance.now()?'¿Seguro?':'✕ Salir',()=>{if(S.exitArmed>performance.now())endSession();else S.exitArmed=performance.now()+3000;},'red'],
+       [()=>'',()=>{}]].filter(a=>a[0]()!==''));
+  return it;
+}
+let UI=[];
+function buildHud(){
+  UI=uiItems();S.UI=UI;
+  S.eyes.forEach(e=>{
+    e.hud.innerHTML='';e.btns=[];e.cur=[];
+    if(S.panel){const p=mk('div','panel');p.style.cssText=`left:${S.panel.x}px;top:${S.panel.y}px;width:${S.panel.w}px;height:${S.panel.h}px`;e.hud.append(p);}
+    S.heads.forEach(h=>{const t=mk('div','hd');t.textContent=h.label;t.style.cssText=`left:${h.x}px;top:${h.y}px`;e.hud.append(t);});
+    UI.forEach(r=>{const b=mk('div','hb '+r.cls);b.style.cssText=`left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px`;b.textContent=r.label();e.hud.append(b);e.btns.push(b);});
+    e.hint=mk('div','hint');e.hint.style.display='none';e.hud.append(e.hint);
+    e.msgEl=mk('div','msg');e.hud.append(e.msgEl);
+    for(let i=0;i<2;i++){const c=mk('div','cur');e.hud.append(c);e.cur.push(c);}
+    e.dbg=mk('div','dbg');e.hud.append(e.dbg);
+  });
+  S.hoverKey='';
+}
+function hudHit(p){
+  const s=6;
+  for(let i=UI.length-1;i>=0;i--){const r=UI[i];if(p.x>=r.x-s&&p.x<=r.x+r.w+s&&p.y>=r.y-s&&p.y<=r.y+r.h+s)return i;}
+  return -1;
+}
+const inPanel=p=>S.panel&&p.x>=S.panel.x&&p.x<=S.panel.x+S.panel.w&&p.y>=S.panel.y&&p.y<=S.panel.y+S.panel.h;
+function setMsg(t,ms=3500){S.msg=t;S.msgT=performance.now()+ms;}
+
 /* ================= ventanas ================= */
-function addWin(type){
-  if(type==='yt'&&!S.opts.ytId){setMsg('Pon un enlace de YouTube en el inicio');return;}
+const WNAME={yt:'YouTube',mp4:'Video MP4'};
+function addWin(type,ytId){
+  if(S.wins.length>=2){setMsg('Máximo 2 ventanas: cierra una con la ✕');return;}
+  if(type==='yt'&&!ytId){setMsg('Esa ventana no tiene enlace (ponlo en el inicio)');return;}
+  if(S.menuOpen)closeMenu();
   const n=S.wins.length;
-  const w={id:S.nextId++,type,yaw:wrap180(S.head.yaw+n*3),pitch:S.head.pitch+n*-2,s:.32,els:[],drift:0,seeks:0,ready:false,closed:false};
+  const w={id:S.nextId++,type,ytId,yaw:wrap180(S.head.yaw+n*4),pitch:S.head.pitch-n*3,s:.32,els:[],drift:0,seeks:0,ready:false,closed:false,err:0,num:S.wins.filter(x=>x.type===type).length+1};
   for(let side=0;side<2;side++){
     const el=mk('div','win');el.style.width=WL+'px';el.style.height=HL+'px';
-    el.innerHTML=`<div class="tb"><span class="tt">${type==='yt'?'YouTube (2 iframes)':'MP4 (1 decodificación)'}</span><span class="bt">⏯</span><span class="bx">✕</span></div><div class="body"></div><div class="rz"></div>`;
+    el.innerHTML=`<div class="tb"><span class="tt"></span><span class="bx">✕</span></div><div class="body"></div>`+
+      `<div class="cb"><span class="cbtn">⏪ 10</span><span class="cbtn">⏯</span><span class="cbtn">10 ⏩</span><span class="cbtn">🔊</span></div>`+
+      `<div class="sl"><span class="sp">＋</span><div class="trk"></div><div class="kn"></div><span class="sm">−</span></div>`;
     S.eyes[side].world.append(el);w.els.push(el);
   }
-  S.wins.push(w);reorder();
+  S.wins.push(w);reorder();setTitles(w);
   if(type==='yt')createYT(w);else createMP4(w);
 }
 function reorder(){S.wins.forEach((w,i)=>w.els.forEach(el=>el.style.zIndex=i+1));}
@@ -271,15 +343,48 @@ function raise(w){const i=S.wins.indexOf(w);if(i>=0&&i<S.wins.length-1){S.wins.s
 function closeWin(w){
   w.closed=true;
   try{w.p&&w.p.forEach(p=>p.destroy());}catch(_){}
-  if(w.video){try{w.video.pause();}catch(_){}w.video.remove();}
+  if(w.video){try{w.video.pause();}catch(_){}if(w.video!==S.primed)w.video.remove();else S.primedUsed=false;}
   w.els.forEach(el=>el.remove());
-  S.wins=S.wins.filter(x=>x!==w);
+  S.wins=S.wins.filter(x=>x!==w);S.hoverKey='';
 }
-function togglePlay(w){
+function winStatus(w){
   try{
-    if(w.type==='yt'&&w.ready){const st=w.p[0].getPlayerState();if(st===1)w.p.forEach(p=>p.pauseVideo());else w.p.forEach(p=>p.playVideo());}
-    else if(w.type==='mp4'&&w.video){if(w.video.paused)w.video.play();else w.video.pause();}
+    if(w.err)return '⚠ error '+w.err+(w.err===150||w.err===101||w.err===153?' (no deja incrustar)':'');
+    if(w.type==='yt'){
+      if(!w.ready)return '… cargando';
+      const st=w.p[0].getPlayerState(),t=w.p[0].getCurrentTime();
+      const ic={'-1':'⏹ listo','0':'⏹ fin','1':'▶','2':'⏸','3':'⏳','5':'⏹ listo'}[st]||'…';
+      return ic+' '+mmss(t||0);
+    }
+    if(w.video)return (w.video.paused?'⏸ ':'▶ ')+mmss(w.video.currentTime||0);
   }catch(_){}
+  return '…';
+}
+function setTitles(w){
+  const txt='✥ '+WNAME[w.type]+(w.type==='yt'?' '+w.num:'')+' · '+winStatus(w);
+  let muted=true;
+  try{muted=w.type==='yt'?(w.ready?w.p[0].isMuted():true):(w.video?w.video.muted:true);}catch(_){}
+  w.els.forEach(el=>{
+    const t=el.querySelector('.tt');if(t.textContent!==txt)t.textContent=txt;
+    const v=el.querySelectorAll('.cbtn')[3];const vt=muted?'🔇':'🔊';if(v.textContent!==vt)v.textContent=vt;
+  });
+}
+function ctlAction(w,i){
+  try{
+    if(w.type==='yt'){
+      if(!w.ready){setMsg('YouTube aún carga…');return;}
+      const p0=w.p[0];
+      if(i===1){const st=p0.getPlayerState();if(st===1)w.p.forEach(p=>p.pauseVideo());else w.p.forEach(p=>p.playVideo());}
+      else if(i===0||i===2){const t=Math.max(0,p0.getCurrentTime()+(i===0?-10:10));w.p.forEach(p=>p.seekTo(t,true));}
+      else{if(p0.isMuted())p0.unMute();else p0.mute();}
+    }else if(w.video){
+      const v=w.video;
+      if(i===1){if(v.paused)v.play().catch(()=>{});else v.pause();}
+      else if(i===0||i===2){v.currentTime=Math.max(0,v.currentTime+(i===0?-10:10));}
+      else v.muted=!v.muted;
+    }
+  }catch(_){}
+  setTitles(w);
 }
 /* --- YouTube: un reproductor por ojo, el izquierdo manda --- */
 function loadYT(cb){
@@ -289,19 +394,22 @@ function loadYT(cb){
   window.onYouTubeIframeAPIReady=()=>{const q=S.ytQ;S.ytQ=[];q.forEach(f=>f());};
   const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';
   s.onerror=()=>setMsg('No cargó la API de YouTube',8000);document.head.append(s);
-  setTimeout(()=>{if(!(window.YT&&YT.Player))setMsg('YouTube tarda en cargar…',6000);},9000);
 }
 function createYT(w){
   loadYT(()=>{
     if(w.closed)return;
-    const id=S.opts.ytId;
+    const id=w.ytId;
     const make=side=>{
       const host=mk('div');w.els[side].querySelector('.body').append(host);
       const vars={autoplay:1,mute:1,playsinline:1,controls:0,rel:0,modestbranding:1,disablekb:1,fs:0,iv_load_policy:3,loop:1,playlist:id,enablejsapi:1};
       if(location.origin&&location.origin!=='null')vars.origin=location.origin;
       return new YT.Player(host,{width:BW,height:BH,videoId:id,playerVars:vars,events:{
-        onReady:ev=>{w['r'+side]=true;if(side===0){try{ev.target.unMute();}catch(_){}}try{ev.target.playVideo();}catch(_){}w.ready=!!(w.r0&&w.r1);},
-        onError:ev=>setMsg('YouTube error '+ev.data+' (¿no permite incrustar?)',8000)
+        onReady:ev=>{
+          w['r'+side]=true;
+          try{if(S.gestureDone&&side===0)ev.target.unMute();ev.target.playVideo();}catch(_){}
+          w.ready=!!(w.r0&&w.r1);
+        },
+        onError:ev=>{w.err=ev.data;}
       }});
     };
     w.p=[make(0),make(1)];
@@ -310,26 +418,30 @@ function createYT(w){
 function syncTick(){
   const now=performance.now();
   S.wins.forEach(w=>{
-    if(w.type!=='yt'||!w.ready||w.closed)return;
-    try{
-      const tL=w.p[0].getCurrentTime(),tR=w.p[1].getCurrentTime();
-      const sL=w.p[0].getPlayerState(),sR=w.p[1].getPlayerState();
-      w.drift=(tR-tL)*1000;
-      if(sL===1&&S.opts.autosync){
-        if(sR!==1&&sR!==3)w.p[1].playVideo();
-        if(Math.abs(w.drift)>150&&now-(w.lastSeek||0)>2500){w.p[1].seekTo(tL+.12,true);w.lastSeek=now;w.seeks++;}
-      }else if(sL===2&&sR===1)w.p[1].pauseVideo();
-    }catch(_){}
+    if(w.closed)return;
+    if(w.type==='yt'&&w.ready){
+      try{
+        const tL=w.p[0].getCurrentTime(),tR=w.p[1].getCurrentTime();
+        const sL=w.p[0].getPlayerState(),sR=w.p[1].getPlayerState();
+        w.drift=(tR-tL)*1000;
+        if(sL===1&&S.opts.autosync){
+          if(sR!==1&&sR!==3)w.p[1].playVideo();
+          if(Math.abs(w.drift)>150&&now-(w.lastSeek||0)>2500){w.p[1].seekTo(tL+.12,true);w.lastSeek=now;w.seeks++;}
+        }else if(sL===2&&sR===1)w.p[1].pauseVideo();
+      }catch(_){}
+    }
+    setTitles(w);
   });
 }
-/* --- MP4: se decodifica una vez y se dibuja en dos canvas --- */
+/* --- MP4: una sola decodificación dibujada en dos canvas --- */
 function createMP4(w){
   let v=null;
   if(S.primed&&!S.primedUsed){v=S.primed;S.primedUsed=true;}
   else{v=document.createElement('video');v.src=MP4_URL;v.muted=true;}
   v.loop=true;v.playsInline=true;v.setAttribute('playsinline','');v.preload='auto';
   v.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none;z-index:-1';
-  document.body.append(v);w.video=v;
+  if(!v.isConnected)document.body.append(v);
+  w.video=v;
   const cs=[0,1].map(side=>{const c=mk('canvas');c.width=800;c.height=450;w.els[side].querySelector('.body').append(c);return c.getContext('2d');});
   const pump=()=>{
     if(w.closed)return;
@@ -347,7 +459,7 @@ async function initHands(){
     const mod=await import(MP_BASE+'/vision_bundle.mjs');
     const fs=await mod.FilesetResolver.forVisionTasks(MP_BASE+'/wasm');
     const build=delegate=>mod.HandLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:MODEL_URL,delegate},runningMode:'VIDEO',numHands:2,minHandDetectionConfidence:.5,minHandPresenceConfidence:.5,minTrackingConfidence:.5});
-    S.mod=mod;S.fs=fs;S.build=build;
+    S.build=build;
     if(S.opts.cpu){S.lm=await build('CPU');S.delegate='CPU';}
     else{try{S.lm=await build('GPU');S.delegate='GPU';}catch(e){console.warn('GPU falló',e);S.lm=await build('CPU');S.delegate='CPU';}}
     S.msgHands='';
@@ -375,36 +487,58 @@ function processHands(res,v,now){
   (res.landmarks||[]).forEach((lm,i)=>{
     const lab=hs[i]&&hs[i][0]&&hs[i][0].categoryName;
     let slot=lab==='Left'?0:1;if(used[slot])slot=1-slot;used[slot]=true;
-    const th=lm[4],ix=lm[8],wr=lm[0],mc=lm[9];
     const dd=(a,b)=>Math.hypot((a.x-b.x)*vw,(a.y-b.y)*vh);
-    const ratio=dd(th,ix)/(dd(wr,mc)||1);
+    const th=lm[4],ix=lm[8];
+    // medida 2D: punta-pulgar a punta-índice entre el tamaño de la mano (la dimensión mayor, para que no se encoja al girar la mano)
+    const size2=Math.max(dd(lm[0],lm[9]),dd(lm[5],lm[17])*1.2,dd(lm[0],lm[5]))||1;
+    const r2=dd(th,ix)/size2;
+    // medida 3D (landmarks "de mundo", en metros): casi no depende de cómo gire la mano
+    let ratio=r2;
+    const wl=res.worldLandmarks&&res.worldLandmarks[i];
+    if(wl){
+      const d3=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
+      const size3=Math.max(d3(wl[0],wl[9]),d3(wl[5],wl[17])*1.2)||.1;
+      ratio=(r2+d3(wl[4],wl[8])/size3)/2;
+    }
     handUpdate(slot,((th.x+ix.x)/2)*vw*sc+ox,((th.y+ix.y)/2)*vh*sc+oy,ratio,now);
   });
 }
 function handUpdate(i,px,py,ratio,now){
   const h=S.hands[i],fresh=now-h.seen>300||!h.vis;
-  h.x=fresh?px:h.x+(px-h.x)*.55;h.y=fresh?py:h.y+(py-h.y)*.55;
-  h.seen=now;h.ratio=ratio;h.vis=true;
-  const was=h.pinch;
-  if(!was&&ratio<S.pinchOn)h.pinch=true;else if(was&&ratio>S.pinchOff)h.pinch=false;
-  if(h.pinch&&!was)pinchStart(h);
-  if(!h.pinch&&was)pinchEnd(h);
+  if(h.mouse||fresh){h.x=px;h.y=py;h.ratio=ratio;h.cnt=0;}
+  else{
+    const sp=Math.hypot(px-h.x,py-h.y),a=clamp(.28+sp*.03,.28,.85);   // más suave quieto, más ágil en movimiento
+    h.x+=(px-h.x)*a;h.y+=(py-h.y)*a;h.ratio=h.ratio*.5+ratio*.5;
+  }
+  h.seen=now;h.vis=true;
+  h.hist.push({t:now,x:h.x,y:h.y});while(h.hist.length&&now-h.hist[0].t>600)h.hist.shift();
+  const closing=h.ratio<S.pinchOn,opening=h.ratio>S.pinchOff;
+  if(h.mouse){   // el ratón actúa al instante
+    if(!h.pinch&&closing){h.pinch=true;pinchStart(h);}
+    else if(h.pinch&&opening){h.pinch=false;pinchEnd(h);}
+    return;
+  }
+  if(!h.pinch){h.cnt=closing?h.cnt+1:0;if(h.cnt>=2){h.pinch=true;h.cnt=0;pinchStart(h);}}   // 2 cuadros seguidos bien cerrados
+  else{h.cnt=opening?h.cnt+1:0;if(h.cnt>=2){h.pinch=false;h.cnt=0;pinchEnd(h);}}               // 2 cuadros seguidos bien abiertos
 }
+function histAt(h,t){for(let i=h.hist.length-1;i>=0;i--)if(h.hist[i].t<=t)return h.hist[i];return h.hist[0]||{x:h.x,y:h.y};}
 function pinchStart(h){
-  const p={x:h.x,y:h.y};
+  S.pinchCount++;S.hintUntil=Math.min(S.hintUntil,performance.now()+4000);
+  const p=h.mouse?{x:h.x,y:h.y}:histAt(h,performance.now()-130);   // el punto donde estaban los dedos antes de cerrarse
   const bi=hudHit(p);
-  if(bi>=0){BTNS[bi].act();S.flash=bi;S.flashT=performance.now();h.grab={type:'ui'};return;}
+  if(bi>=0){UI[bi].act();S.flash=bi;S.flashT=performance.now();h.grab={type:'ui'};return;}
+  if(inPanel(p)){h.grab={type:'ui'};return;}
   const hit=winHit(p);if(!hit){h.grab=null;return;}
   const w=hit.win;raise(w);
   if(hit.part==='close'){closeWin(w);h.grab={type:'ui'};return;}
-  if(hit.part==='play'){togglePlay(w);h.grab={type:'ui'};return;}
+  if(hit.part==='ctl'){ctlAction(w,hit.idx);h.grab={type:'ui'};return;}
+  if(hit.part==='slider'){h.grab={type:'slider',win:w};return;}
+  const pw=toWorld(h.x,h.y);
   const other=S.hands.find(o=>o!==h&&o.grab&&o.grab.type==='move'&&o.grab.win===w);
-  if(other&&hit.part!=='resize'){
+  if(other){
     S.zoom={win:w,hs:[h,other],d0:Math.hypot(h.x-other.x,h.y-other.y)||1,s0:w.s};
     h.grab={type:'zoom',win:w};other.grab={type:'zoom',win:w};return;
   }
-  const pw=worldToScreen(p.x,p.y);
-  if(hit.part==='resize'){h.grab={type:'resize',win:w,d0:Math.hypot(pw.x-hit.c.x,pw.y-hit.c.y)||1,s0:w.s};return;}
   h.grab={type:'move',win:w,offYaw:wrap180(w.yaw-cursorYaw(pw)),offPitch:w.pitch-cursorPitch(pw)};
 }
 function pinchEnd(h){
@@ -413,31 +547,63 @@ function pinchEnd(h){
 }
 function handsFrame(now){
   S.hands.forEach(h=>{
-    if(h.vis&&!h.mouse&&now-h.seen>350){h.vis=false;if(h.pinch){h.pinch=false;pinchEnd(h);}}
+    if(h.vis&&!h.mouse&&now-h.seen>350){h.vis=false;h.cnt=0;if(h.pinch){h.pinch=false;pinchEnd(h);}}
     const g=h.grab;if(!g||!h.vis)return;
-    const pw=worldToScreen(h.x,h.y);
+    const pw=toWorld(h.x,h.y);
     if(g.type==='move'){g.win.yaw=wrap180(cursorYaw(pw)+g.offYaw);g.win.pitch=clamp(cursorPitch(pw)+g.offPitch,-80,80);}
-    else if(g.type==='resize'){const c=winCenter(g.win);g.win.s=clamp(g.s0*Math.hypot(pw.x-c.x,pw.y-c.y)/g.d0,.12,.9);}
+    else if(g.type==='slider'){
+      // la perilla se queda justo bajo la mano: se calcula con la posición de la mano dentro de la barra de la ventana
+      const w=g.win,c=winCenter(w),ly=(pw.y-c.y)/w.s+HL/2;
+      const t=clamp(1-(ly-TB)/BH,0,1),target=SMIN*Math.pow(SMAX/SMIN,t);
+      w.s+=(target-w.s)*.5;
+    }
   });
   const z=S.zoom;
   if(z){
     const [a,b]=z.hs;
     if(!a.pinch||!b.pinch||!a.vis||!b.vis){z.hs.forEach(o=>{o.grab=null;});S.zoom=null;}
-    else z.win.s=clamp(z.s0*(Math.hypot(a.x-b.x,a.y-b.y)/z.d0),.12,.9);
+    else z.win.s=clamp(z.s0*(Math.hypot(a.x-b.x,a.y-b.y)/z.d0),SMIN,SMAX);
   }
 }
 function winHit(p){
-  const pw=worldToScreen(p.x,p.y);
+  const pw=toWorld(p.x,p.y);
   for(let i=S.wins.length-1;i>=0;i--){
     const w=S.wins[i],c=winCenter(w);
     const lx=(pw.x-c.x)/w.s+WL/2,ly=(pw.y-c.y)/w.s+HL/2,sl=8/w.s;
+    if(lx>WL+10&&lx<WL+130+sl&&ly>TB-70&&ly<TB+BH+70)return {win:w,part:'slider',c};
     if(lx<-sl||lx>WL+sl||ly<-sl||ly>HL+sl)continue;
-    let part='body';
-    if(ly<TB)part=lx>WL-110?'close':(lx>WL-220?'play':'title');
-    else if(lx>WL-90&&ly>HL-90)part='resize';
-    return {win:w,part,c};
+    let part='body',idx=0;
+    if(ly<TB)part=lx>WL-130?'close':'title';
+    else if(ly>=TB+BH){part='ctl';idx=clamp(Math.floor(lx/(WL/4)),0,3);}
+    return {win:w,part,idx,c};
   }
   return null;
+}
+function applyHover(){
+  const hv=[];
+  S.hands.forEach((h,i)=>{
+    if(!h.vis){hv.push(null);return;}
+    const g=h.grab,hit=(g&&(g.type==='move'||g.type==='slider'||g.type==='zoom'))?{win:g.win,part:g.type==='slider'?'slider':'title',idx:0}:winHit(h);
+    const bi=hudHit(h);
+    hv.push({ui:bi,win:hit&&bi<0?hit.win.id:0,part:hit&&bi<0?hit.part:'',idx:hit?hit.idx||0:0});
+  });
+  const key=JSON.stringify(hv);
+  if(key===S.hoverKey)return;S.hoverKey=key;
+  S.wins.forEach(w=>w.els.forEach(el=>{el.classList.remove('hov');el.querySelectorAll('.hot').forEach(n=>n.classList.remove('hot'));}));
+  S.eyes.forEach(e=>e.btns.forEach(b=>b.classList.remove('hot')));
+  hv.forEach(x=>{
+    if(!x)return;
+    if(x.ui>=0)S.eyes.forEach(e=>e.btns[x.ui]&&e.btns[x.ui].classList.add('hot'));
+    else if(x.win){
+      const w=S.wins.find(q=>q.id===x.win);if(!w)return;
+      w.els.forEach(el=>{
+        el.classList.add('hov');
+        let t=null;
+        if(x.part==='close')t=el.querySelector('.bx');else if(x.part==='ctl')t=el.querySelectorAll('.cbtn')[x.idx];else if(x.part==='slider')t=el.querySelector('.sl');
+        if(t)t.classList.add('hot');
+      });
+    }
+  });
 }
 
 /* ================= bucle de dibujo ================= */
@@ -446,47 +612,55 @@ function tick(ts){
   if(!S.running)return;
   requestAnimationFrame(tick);
   const dt=Math.min(.1,(ts-lastTs)/1000||.016);lastTs=ts;S.frames++;
-  updateHead(dt);
-  maybeDetect(ts);
-  handsFrame(ts);
-  const cx=S.ew/2,cy=S.eh/2,hd=S.head;
+  updateHead(dt);maybeDetect(ts);handsFrame(ts);applyHover();
+  const cx=S.ew/2,cy=S.eh/2,hd=S.head,lr=Math.log(SMAX/SMIN);
   S.eyes.forEach(e=>{
     e.world.style.transform=`rotate(${(-hd.roll).toFixed(2)}deg)`;
     if(S.bg!=='cam')e.sky.style.transform=`translate3d(${(cx-(hd.yaw+360)*S.ppd).toFixed(1)}px,${(cy-2*S.eh+hd.pitch*S.ppd).toFixed(1)}px,0)`;
   });
   S.wins.forEach(w=>{
-    const c=winCenter(w);
+    const c=winCenter(w),t=clamp(Math.log(w.s/SMIN)/lr,0,1),kt=((1-t)*(BH-76)).toFixed(0)+'px';
     for(let side=0;side<2;side++){
-      const dx=S.eyes[side].sgn*S.conv/2;
-      w.els[side].style.transform=`translate3d(${(c.x+dx).toFixed(1)}px,${c.y.toFixed(1)}px,0) scale(${w.s.toFixed(4)}) translate(-50%,-50%)`;
+      const dx=S.eyes[side].sgn*S.conv/2,el=w.els[side];
+      el.style.transform=`translate3d(${(c.x+dx).toFixed(1)}px,${c.y.toFixed(1)}px,0) scale(${w.s.toFixed(4)}) translate(-${WL/2}px,-${HL/2}px)`;
+      const kn=el.querySelector('.kn');if(kn.style.top!==kt)kn.style.top=kt;
     }
   });
   S.eyes.forEach(e=>{
     const dx=e.sgn*S.conv/2;
     S.hands.forEach((h,i)=>{
-      const c=e.cur[i];
-      if(h.vis){c.style.display='block';c.style.transform=`translate3d(${(h.x+dx).toFixed(1)}px,${h.y.toFixed(1)}px,0)`;c.className='cur'+(h.pinch?' p':'');}
-      else c.style.display='none';
+      const c=e.cur[i];if(!c)return;
+      if(h.vis){
+        // el anillo se encoge según qué tan cerca están los dedos de cerrarse; relleno azul = agarrado
+        const k=h.pinch?1:clamp(1-.5*clamp((S.pinchOff-h.ratio)/(S.pinchOff-S.pinchOn),0,1),.5,1);
+        c.style.display='block';c.style.transform=`translate3d(${(h.x+dx).toFixed(1)}px,${h.y.toFixed(1)}px,0) scale(${k.toFixed(2)})`;
+        const cls='cur'+(h.pinch?' p':'');if(c.className!==cls)c.className=cls;
+      }else c.style.display='none';
     });
   });
   if(ts-lastHud>200){lastHud=ts;hudRefresh(ts);}
 }
 function hudRefresh(ts){
-  const hot=new Set();
-  S.hands.forEach(h=>{if(h.vis){const b=hudHit(h);if(b>=0)hot.add(b);}});
   S.eyes.forEach(e=>{
     e.btns.forEach((b,i)=>{
-      const t=BTNS[i].t();if(b.textContent!==t)b.textContent=t;
-      b.className='hb'+(S.flash===i&&ts-S.flashT<350?' hit':(hot.has(i)?' hot':''));
+      const r=UI[i];if(!r)return;
+      const t=r.label();if(b.textContent!==t)b.textContent=t;
+      const hit=S.flash===i&&ts-S.flashT<350;
+      if(hit&&!b.classList.contains('hit'))b.classList.add('hit');else if(!hit&&b.classList.contains('hit'))b.classList.remove('hit');
     });
     e.dbg.className='dbg'+(S.debug?'':' off');
-    e.msgEl.textContent=ts<S.msgT?S.msg:(S.msgHands||'');
+    const showMsg=ts<S.msgT||S.msgHands;
+    e.msgEl.style.display=showMsg?'block':'none';e.msgEl.style.bottom=S.menuOpen?'auto':'70px';e.msgEl.style.top=S.menuOpen?(S.debug?'44px':'6px'):'auto';
+    e.msgEl.textContent=ts<S.msgT?S.msg:S.msgHands;
+    const showHint=ts<S.hintUntil&&!S.menuOpen&&!showMsg;
+    e.hint.style.display=showHint?'block':'none';
+    if(showHint)e.hint.innerHTML='✋ Junta pulgar e índice <b>bien cerrados</b> = agarrar; mueve la mano = mover la ventana.<br>Barra derecha = tamaño · botones de abajo = reproducir · ☰ Menú';
   });
   if(S.debug){
     const yt=S.wins.find(w=>w.type==='yt'&&w.ready);
     const nh=S.hands.filter(h=>h.vis).length;
     const rs=S.hands.map(h=>h.vis?h.ratio.toFixed(2):'—').join(' ');
-    const l1=`fps ${S.fps} · manos ${S.delegate} ${S.detMs?S.detMs.toFixed(0)+'ms':'—'} ${S.detFps||0}/s · ${nh}✋ pellizco ${rs} (<${S.pinchOn})`;
+    const l1=`fps ${S.fps} · manos ${S.delegate} ${S.detMs?S.detMs.toFixed(0)+'ms':'—'} ${S.detFps||0}/s · ${nh}✋ cierre ${rs} (<${S.pinchOn})`;
     const l2=`yaw ${S.head.yaw.toFixed(0)} pit ${S.head.pitch.toFixed(0)} roll ${S.head.roll.toFixed(0)} · sep ${S.conv} · ${mmss((ts-S.t0)/1000)}`;
     const l3=yt?`YT Δ ${yt.drift>=0?'+':''}${yt.drift.toFixed(0)}ms saltos ${yt.seeks}`:(S.sim.on?'sim: flechas = cabeza':'');
     S.eyes.forEach(e=>{e.dbg.textContent=l1+'\n'+l2+'\n'+l3;});
@@ -497,15 +671,15 @@ function statsTick(){
   S.fps=S.frames;S.frames=0;S.detFps=S.detCount;S.detCount=0;
   const drift=Math.max(0,...S.wins.filter(w=>w.type==='yt'&&w.ready).map(w=>Math.abs(w.drift)));
   const seeks=S.wins.reduce((a,w)=>a+(w.seeks||0),0);
-  S.log.push({t:(performance.now()-S.t0)/1000,fps:S.fps,det:S.detFps,detMs:S.detMs,drift,seeks,wins:S.wins.length});
+  S.log.push({t:(performance.now()-S.t0)/1000,fps:S.fps,det:S.detFps,detMs:S.detMs,drift,seeks,pinches:S.pinchCount});
 }
 
 /* ================= entrada de escritorio (ratón + teclado) ================= */
 function bindDesktop(){
   const vr=$('#vr');
   const pos=e=>({x:(e.clientX>=innerWidth/2?e.clientX-innerWidth/2:e.clientX),y:e.clientY});
-  vr.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;const h=S.hands[0];h.mouse=true;const p=pos(e);handUpdate(0,p.x,p.y,h.pinch?.1:1,performance.now());});
-  vr.addEventListener('pointerdown',e=>{const h=S.hands[0];h.mouse=true;const p=pos(e);h.x=p.x;h.y=p.y;h.vis=true;handUpdate(0,p.x,p.y,.1,performance.now());});
+  vr.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;const h=S.hands[0];h.mouse=true;const p=pos(e);handUpdate(0,p.x,p.y,h.pinch?.05:1,performance.now());});
+  vr.addEventListener('pointerdown',e=>{const h=S.hands[0];h.mouse=true;const p=pos(e);h.x=p.x;h.y=p.y;h.vis=true;handUpdate(0,p.x,p.y,.05,performance.now());});
   addEventListener('pointerup',e=>{const h=S.hands[0];if(h.mouse)handUpdate(0,h.x,h.y,1,performance.now());});
   addEventListener('keydown',e=>{S.sim.keys[e.key]=true;});
   addEventListener('keyup',e=>{S.sim.keys[e.key]=false;});
@@ -518,29 +692,43 @@ function ytIdOf(s){
   const m=s.match(/(?:v=|youtu\.be\/|embed\/|shorts\/|live\/)([\w-]{11})/);return m?m[1]:'';
 }
 const err=t=>{$('#err').textContent=t;};
-
 async function begin(){
   err('');
-  const opts={ytId:ytIdOf($('#yt').value),useCam:$('#usecam').checked,bg:$('#bg').value,autosync:$('#autosync').checked,cpu:$('#cpu').checked||QS.get('cpu')==='1'};
-  S.opts=opts;
-  // Todo lo que exige gesto del usuario se pide AQUÍ, de forma síncrona, antes de cualquier await.
+  const opts={yt1:ytIdOf($('#yt1').value),yt2:ytIdOf($('#yt2').value),useCam:$('#usecam').checked,bg:$('#bg').value,autosync:$('#autosync').checked,cpu:$('#cpu').checked||QS.get('cpu')==='1'};
+  S.opts=opts;setSens(parseInt($('#sens').value,10)||0);
+  // Lo que exige gesto del usuario se pide AQUÍ, de forma síncrona, antes de cualquier await.
   const oriP=(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function')?DeviceOrientationEvent.requestPermission():Promise.resolve('granted');
-  try{ // desbloquea audio para el MP4 (más tarde el pellizco ya no cuenta como gesto)
+  try{
     const v=document.createElement('video');v.src=MP4_URL;v.playsInline=true;v.setAttribute('playsinline','');v.loop=true;v.preload='auto';
-    v.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none';document.body.append(v);
+    v.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none;z-index:-1';document.body.append(v);
     S.primed=v;const pp=v.play();if(pp&&pp.then)pp.then(()=>{v.pause();v.currentTime=0;}).catch(()=>{});
   }catch(_){}
   const camP=opts.useCam?(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia?navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}}}):Promise.reject(new Error('Sin cámara: abre la página por HTTPS'))):Promise.resolve(null);
   let ori='granted';try{ori=await oriP;}catch(e){ori='error';}
   try{S.stream=await camP;}catch(e){S.stream=null;err('Cámara no disponible: '+(e&&e.message||e)+'\nSigo sin cámara (solo fondo 3D, sin manos).');}
   if(ori==='granted')addEventListener('deviceorientation',onOri,true);
-  else err($('#err').textContent+'\nMovimiento no autorizado: usa las flechas del teclado para simular la cabeza.');
   S.bg=(opts.bg==='cam'&&!S.stream)?'sun':opts.bg;
-  // cuenta regresiva para ponerse el visor
   $('#start').style.display='none';
-  const c=$('#count');c.style.display='flex';
-  let n=S.stream?8:5;$('#cn').textContent=n;
-  const iv=setInterval(()=>{n--;$('#cn').textContent=n;if(n<=0){clearInterval(iv);c.style.display='none';startVR();}},1000);
+  startVR();
+  // pantalla de activación: un toque aquí permite video y sonido (el pellizco no cuenta como toque)
+  const a=$('#arm');a.style.display='flex';$('#armT').textContent='Toca la pantalla una vez';
+  $('#armS').textContent='Eso activa el video y el sonido. Después ponte el visor: tendrás unos segundos.';$('#armN').textContent='';
+  a.addEventListener('click',armGo,{once:true});
+}
+function armGo(){
+  S.gestureDone=true;
+  S.wins.forEach(w=>{
+    try{
+      if(w.type==='yt'&&w.ready){w.p[0].unMute();w.p.forEach(p=>p.playVideo());}
+      if(w.type==='mp4'&&w.video){w.video.muted=false;w.video.play().catch(()=>{});}
+    }catch(_){}
+  });
+  $('#armT').textContent='Ponte el visor';$('#armS').textContent='Cuando termine la cuenta, mira al frente: ahí aparece la ventana.';
+  let n=7;$('#armN').textContent=n;
+  const iv=setInterval(()=>{
+    n--;$('#armN').textContent=n;
+    if(n<=0){clearInterval(iv);$('#arm').style.display='none';S.needCenter=true;S.hintUntil=performance.now()+25000;}
+  },1000);
 }
 function startVR(){
   geom();document.body.classList.add('running');
@@ -550,10 +738,10 @@ function startVR(){
   if(S.stream){S.eyes.forEach(e=>{e.cam.srcObject=S.stream;e.cam.play().catch(()=>{});});}
   applyBg();
   setTimeout(()=>{if(!S.oriOK){S.sim.on=true;setMsg('Sin sensor de movimiento: flechas del teclado = cabeza',8000);}},1500);
-  addWin(S.opts.ytId?'yt':'mp4');
+  addWin(S.opts.yt1?'yt':'mp4',S.opts.yt1);
   S.timers.push(setInterval(statsTick,1000),setInterval(syncTick,300));
   requestAnimationFrame(tick);
-  if(S.stream)initHands();else S.msgHands='Sin cámara: manos desactivadas (ratón sí)';
+  if(S.stream)initHands();else S.msgHands='Sin cámara: manos desactivadas (el ratón sí funciona)';
 }
 function endSession(){
   S.running=false;S.timers.forEach(clearInterval);
@@ -561,7 +749,7 @@ function endSession(){
   if(S.stream)S.stream.getTracks().forEach(t=>t.stop());
   if(S.primed)S.primed.remove();
   removeEventListener('deviceorientation',onOri,true);
-  $('#vr').style.display='none';document.body.classList.remove('running');
+  $('#vr').style.display='none';$('#arm').style.display='none';document.body.classList.remove('running');
   showResults();
 }
 function showResults(){
@@ -570,14 +758,14 @@ function showResults(){
   for(let m=0;m*60<dur;m++){
     const g=L.filter(x=>Math.floor(x.t/60)===m);if(!g.length)continue;
     const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
-    rows.push(`${pad(m)}:00  fps ${avg(g.map(x=>x.fps)).toFixed(0).padStart(2)} (mín ${Math.min(...g.map(x=>x.fps))})  manos ${avg(g.map(x=>x.det)).toFixed(0).padStart(2)}/s ${avg(g.map(x=>x.detMs||0)).toFixed(0)}ms  Δyt máx ${Math.max(...g.map(x=>x.drift)).toFixed(0)}ms  saltos ${g[g.length-1].seeks}`);
+    rows.push(`${pad(m)}:00  fps ${avg(g.map(x=>x.fps)).toFixed(0).padStart(2)} (mín ${Math.min(...g.map(x=>x.fps))})  manos ${avg(g.map(x=>x.det)).toFixed(0).padStart(2)}/s ${avg(g.map(x=>x.detMs||0)).toFixed(0)}ms  Δyt máx ${Math.max(...g.map(x=>x.drift)).toFixed(0)}ms  saltos ${g[g.length-1].seeks}  pellizcos ${g[g.length-1].pinches}`);
   }
   const txt=[
-    `Duración: ${mmss(dur)}`,
-    `Manos: ${S.delegate} · cámara ${S.stream?'sí':'no'} · auto-sync ${S.opts.autosync?'sí':'no'} · sensor ${S.oriOK?'sí':'simulado'}`,
+    `Versión 2 · Duración: ${mmss(dur)}`,
+    `Manos: ${S.delegate} · cámara ${S.stream?'sí':'no'} · auto-sync ${S.opts.autosync?'sí':'no'} · sensor ${S.oriOK?'sí':'simulado'} · pellizco ${SENS[S.sens].n} (${S.pinchOn}/${S.pinchOff})`,
     `Navegador: ${navigator.userAgent}`,
     '',
-    'minuto  fps medio / mínimo · detección manos · deriva YouTube',
+    'minuto  fps medio / mínimo · detección manos · deriva YouTube · pellizcos acumulados',
     ...(rows.length?rows:['(sin datos)'])
   ].join('\n');
   $('#resTxt').textContent=txt;$('#results').style.display='block';
@@ -589,8 +777,8 @@ $('#copy').addEventListener('click',async()=>{try{await navigator.clipboard.writ
 $('#again').addEventListener('click',()=>location.reload());
 addEventListener('resize',()=>{geom();if(S.running)applyGeom();});
 addEventListener('orientationchange',()=>setTimeout(()=>{geom();if(S.running)applyGeom();},300));
-geom();
-window.__S=S;window.__addWin=addWin;window.__handUpdate=handUpdate;   // ganchos solo para pruebas
+setSens(0);geom();
+window.__S=S;window.__addWin=addWin;window.__handUpdate=handUpdate;window.__armGo=armGo;   // ganchos solo para pruebas
 })();
 </script>
 </body>
